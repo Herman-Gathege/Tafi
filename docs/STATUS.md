@@ -16,12 +16,18 @@
 - Architecture options + recommendation + deployment outline
 - Roadmap + backlog + Sprint 0 plan
 - `AGENTS.md` updated for the new process
+- Foundation merged to `main` via PR #1
+
+**Added in this alignment PR:**
+
+- `docs/CONTRIBUTING.md` — PR & co-dev review process (the one process piece the merged foundation lacked)
 
 **In progress:**
 
 - Product research
 - UX research
 - Architecture evaluation
+- Co-dev / owner review of the foundation (this PR)
 
 **Blocked:**
 
