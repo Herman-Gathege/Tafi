@@ -1,67 +1,61 @@
 # Tafi Product Brief
 
-> Working product hypothesis — **not** a final spec. Anything marked ASSUMPTION is unconfirmed.
+> Direction **confirmed by the client** on 5 Oct 2026 (D-04 to D-07, D-12). Items marked PROPOSED or ASSUMPTION
+> still need confirmation.
 
 ## Product
 
-> **ASSUMPTION.** Tafi is a school-transport platform for the Kenyan market that keeps
-> schools, drivers, and parents informed about every school run. The first MVP is a
-> **school-operations tool** (roster, routes, fleet, and parent notifications) because
-> that is what exists and is closest to real value; a parent-facing WhatsApp experience
-> may follow once the operational core is proven.
+Tafi is a **parent safety service for transport**. Parents receive WhatsApp updates about their child's trip:
 
-## Problem
+- "Wanjiru boarded bus KCA 123X at 6:42"
+- "The bus is 5 minutes away"
+- "Wanjiru was dropped off at 16:10"
 
-School transport in Kenya is coordinated informally — phone calls, WhatsApp groups,
-paper logbooks, and spreadsheets. Parents don't know if the bus is coming, who is
-driving, or whether their child boarded safely; schools can't easily see routes,
-ridership, or who owes money. **ASSUMPTION — VALIDATE with owner/users.**
+Transport providers pay for Tafi so they can give parents this peace of mind. (DECIDED)
 
-## Primary User
+## Who pays, who benefits
 
-> **ASSUMPTION (most important question).** The **school transport administrator** is the
-> primary MVP user, because they own the data and the process. The owner must confirm
-> whether the real priority is instead the **parent**.
+| Party | Role | Pays |
+|---|---|---|
+| School (MVP 1) | Runs buses; manages students, routes and drivers in Tafi | Pays Tafi (D-06) |
+| Independent transport provider (later) | Same, outside a school | Pays Tafi (later, D-05) |
+| Parent / guardian | Receives WhatsApp updates; no app | Pays the school for transport (D-06) |
+| Driver | Records the trip and each child's boarding on a phone | — |
+| Tafi platform admin (client) | Onboards providers, sets pricing, bills providers | — |
 
-## Secondary Users
+## Problem (ASSUMPTION — validate in user conversations)
 
-- **Parent/guardian** — wants safety and status for their child.
-- **Driver** — runs the route; would check students in/out.
-- **Tafi platform admin** — operates the service across schools.
-- **Operator** — runs multiple schools (future).
+Parents don't know whether the bus is coming, whether their child boarded, or when they were dropped off, so they
+call the school and the driver. Schools coordinate transport through WhatsApp groups, calls and paper.
 
-## Core Value
+## MVP 1 — school transport
 
-> **ASSUMPTION.** Tafi makes school transport **visible and accountable**: fewer "where is
-> the bus?" calls, a reliable record of who is on the bus, and a single place to run routes
-> and billing.
+Core loop (PROPOSED detail, see `owner-decisions.md`):
 
-## Core Workflow (hypothesis)
+1. Tafi platform admin onboards a school and invites its first admin.
+2. School admin adds students, guardians, routes, stops, vehicles and drivers (manually or by CSV).
+3. Guardians are registered with WhatsApp numbers and their consent is recorded.
+4. Driver opens today's trip on a phone, starts it, and marks each child boarded or dropped off. Location is shared
+   during the trip.
+5. Tafi sends guardians WhatsApp updates: trip started, boarded, bus approaching, dropped off.
+6. School tracks transport fees per term; Tafi bills the school using the client's configured pricing.
 
-1. School signs up / is onboarded (school + first admin user).
-2. Admin adds students, guardians, routes, vehicles, drivers.
-3. Admin assigns students to routes and drivers to vehicles.
-4. Daily run: students board/drop off (QR/scan — **ASSUMPTION, to confirm**).
-5. Notifications go out to parents (WhatsApp — **ASSUMPTION, to confirm**).
-6. Admin tracks attendance/billing; records payments.
+## Later (not MVP 1)
 
-## MVP Hypothesis
+- Independent transport providers and non-school transport.
+- M-Pesa payment automation.
+- QR-scan check-in, SMS fallback, reporting.
 
-For Tafi to deliver real value, the MVP must let a **school** onboard itself, manage its
-**roster and routes**, and **bill families** — reliably, on a phone, without the current
-show-stopping gaps. Everything else is deferred until confirmed.
+## Out of scope for MVP 1
 
-## Out of Scope (for the first MVP — draft)
-
-- Live GPS tracking infrastructure, hardware, or telematics.
-- M-Pesa/payment-gateway automation (manual recording only, unless confirmed).
-- Full parent mobile app.
-- Multi-school operator tooling.
-- Complex analytics/reporting.
+- Parent mobile app.
+- Dedicated GPS hardware.
+- M-Pesa automation.
+- Non-school providers.
 
 ## Unknowns
 
-- Who the primary user is; whether the parent WhatsApp product is the goal.
-- How schools should be created (self-serve vs Tafi-created).
-- Whether real-time tracking/QR/payments are MVP.
-- Whether we keep or replace the current implementation.
+- How Tafi charges schools (unit, frequency, free pilot period).
+- Driver device reality: smartphone, data bundles, who pays for data.
+- Whether schools bill parents per term or per month.
+- Guardian consent process and data-protection obligations.

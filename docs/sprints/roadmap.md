@@ -1,23 +1,28 @@
-# Tafi Roadmap (proposed)
+# Tafi Roadmap
 
-> Starting suggestions only — adjust after owner decisions. Sprints are 1–2 weeks unless noted.
-> Definition of Done (DoD) is per sprint unless stated otherwise.
+> Fits the 3–4 month window (D-11): 2-week sprints, pilot-ready by end of January 2027, pilot in Term 1.
+> Dates are targets; adjust at each sprint review.
 
-| Sprint | Goal | Deliverables | Dependencies | Definition of Done |
-|---|---|---|---|---|
-| 0 — Discovery & Research | Understand what Tafi should become | discovery, product, research, UX, architecture docs; owner decisions | — | product direction + MVP scope agreed; architecture direction agreed/deferred; Sprint 1 ready |
-| 1 — Product Definition + UX Foundation | Lock MVP + UX direction | validated product brief, MVP scope, user flows, IA draft, wireframes | Sprint 0 | MVP scope signed off; key flows wireframed |
-| 2 — Architecture + Project Foundation | Stand up the base stack | repo scaffold, Docker Compose, CI, envs, healthchecks, ADR approved | Sprint 1 | `docker compose up` runs api+db+redis; CI green |
-| 3 — Auth + Core Data | Users, roles, tenancy | auth (JWT/session), school/tenant model, roles, migrations | Sprint 2 | school can be created; users can sign in/invite/reset |
-| 4 — Core School/Ops Workflow | Manage roster, routes, fleet | students, guardians, routes, vehicles, drivers | Sprint 3 | full CRUD with feedback; mobile usable |
-| 5 — Parent Experience | Parent visibility (channel TBD) | parent link/view or notification of run | Sprint 4 | parent receives status for their child |
-| 6 — Driver/Safety Workflow | Driver check-in | driver route list + check-in/scan | Sprint 4 | driver can record pickup/drop-off |
-| 7 — Notifications/Integrations | WhatsApp/SMS/email | notification service + templates + worker | Sprints 4–6 | notifications delivered reliably, logged |
-| 8 — Billing/Payments (if confirmed) | Terms, invoices, payments | terms → invoices → payments (+M-Pesa if in scope) | Sprint 4 | balance tracked; status correct |
-| 9 — Testing + Hardening | Reliability & security | test coverage, a11y pass, security review, perf | Sprints 3–8 | critical paths tested; no P0/P1 bugs |
-| 10 — Deployment + Pilot | Ship to one pilot school | prod deploy, backups, monitoring, runbook | Sprint 9 | pilot live; rollback tested |
+| Sprint | Dates | Status | Goal | Deliverables | Definition of Done |
+|---|---|---|---|---|---|
+| 0 — Discovery & Research | 5–16 Oct | ✅ Closed 6 Oct (C-01→C-04 carried) | Agree what Tafi is | Decisions, MVP 1 scope, user conversations, Sprint 1 plan | See [`sprint-0.md`](sprint-0.md) |
+| 1 — UX + Foundation | 19–30 Oct | Not started | Design the flows; stand up the base project | Wireframes (admin, driver, WhatsApp messages); `backend/` + `frontend/` scaffold; Docker Compose; CI; spike results; templates drafted | `docker compose up` runs api + db + redis + worker; CI green; client approves wireframes |
+| 2 — Auth + Tenancy | 2–13 Nov | Planned | Users, roles, organizations | Organizations, platform admin onboards a school, invites, sign in, password reset, roles; staging on DigitalOcean | A new school can be onboarded end to end on staging |
+| 3 — School Operations | 16–27 Nov | Planned | Data the parent messages depend on | Students, guardians (multiple, consent), routes + stops, vehicles, drivers, assignments, CSV import; WhatsApp templates submitted to Meta | A school's full roster can be set up in under a day |
+| 4 — Driver Trip App | 30 Nov–11 Dec | Planned | Record what happens on the bus | Driver web app: today's trips, start/end, boarded/dropped off/absent, location sharing | A test trip records every event and a location trail |
+| 5 — Parent WhatsApp | 14–23 Dec | Planned | Deliver the promise | Outbox + worker; trip started, boarded, approaching, dropped off messages; notification log; live trip view | Guardians on a test trip receive every message, logged; no duplicates |
+| — Holiday break | 24 Dec–3 Jan | — | — | — | — |
+| 6 — Billing | 4–15 Jan | Planned | Money flows | School → parent fees (terms, invoices, payments); platform plans and pricing editable by client; Tafi → school invoices | Client changes a price without developers; balances correct |
+| 7 — Hardening + Launch | 18–29 Jan | Planned | Pilot-ready | Critical-path tests, accessibility and security review, privacy checklist, production deploy, backups, monitoring, runbook | Production live; restore and rollback tested; pilot school onboarded |
+| Pilot | From Feb 2027 | Planned | Validate with a real school | Weekly check-ins, fixes | Success metric agreed with client is measured |
 
 ## Notes
 
-- Sprints 5–8 may merge/reorder based on owner decisions (parent vs billing vs driver first).
-- Sprint 8 only exists if the owner confirms billing is in the MVP.
+- **Sprint 0 closed 6 Oct 2026** with four carry-over items (C-01 to C-04) cleared in the 7–16 Oct window; see
+  [`sprint-0.md`](sprint-0.md#review--close-out).
+- **WhatsApp lead time:** Meta Business verification starts in Sprint 0; templates are submitted in Sprint 3 so
+  they are approved before Sprint 5.
+- **Staging from Sprint 2:** every sprint ends with a demo the client can click through.
+- **Billing is the release valve:** if earlier sprints slip, Sprint 6 work moves after the pilot starts (pilot
+  can run free).
+- **School calendar:** user conversations must happen in October, before Term 3 closes.

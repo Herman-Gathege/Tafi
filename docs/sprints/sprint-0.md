@@ -1,62 +1,112 @@
 # Sprint 0 — Project Discovery & Research
 
-**Sprint Goal:** "Understand what Tafi should become before we decide what to build."
-
-## Objectives
-
-- Establish an agreed **product direction** and **primary user**.
-- Define a **concrete MVP scope** built on user value, not existing tables.
-- Capture **owner decisions** and surface all assumptions.
-- Produce the **UX research questions**, architecture options, and a sprint roadmap.
-- Prepare **Sprint 1**.
-
-## Inputs
-
-- Existing repository (commit `c9e74d8`).
-- Current-state report: [`../TAFI-CURRENT-STATE-AND-UX-DISCOVERY.md`](../TAFI-CURRENT-STATE-AND-UX-DISCOVERY.md)
-  and condensed [`../discovery/current-state.md`](../discovery/current-state.md).
-- Owner knowledge and existing marketing material.
-- Competitor research ([`../research/competitor-notes.md`](../research/competitor-notes.md)).
-- FMHY resources ([`../research/tools-and-resources.md`](../research/tools-and-resources.md)).
-- UX research framework ([`../ux/ux-research.md`](../ux/ux-research.md)).
-- Technical research ([`../research/research-plan.md`](../research/research-plan.md)).
+**Dates:** Mon 5 Oct – Fri 16 Oct 2026
+**Goal:** Understand what Tafi should become before we decide what to build.
+**Closed:** Mon 6 Oct 2026 (team close-out; four carry-over items, see below).
 
 ## Tasks
 
-- [x] Review current implementation (discovery report)
-- [ ] Confirm primary user
-- [ ] Confirm MVP problem
+### Discovery and research
+
+- [x] Review the prototype (discovery report)
 - [x] Research competitors
-- [x] Research UX patterns (framework)
-- [x] Research technical requirements (plan)
-- [x] Review FMHY resources
-- [x] Evaluate architecture options
-- [x] Draft product brief
-- [x] Draft MVP scope
-- [x] Identify owner decisions
-- [ ] Agree MVP boundaries
-- [ ] Approve architecture direction
-- [ ] Define Sprint 1
+- [x] UX research framework, user flows, IA draft
+- [x] Technical research plan and architecture options
+
+### Decisions
+
+- [x] Confirm who the product owner is (client — D-03)
+- [x] Confirm product direction (parent safety service — D-04)
+- [x] Confirm first customer (schools — D-05)
+- [x] Confirm billing model (D-06) and configurable pricing (D-07)
+- [x] Decide architecture (rebuild — D-08) and drop Lovable (D-09)
+- [x] Agree delivery window (D-11)
+- [ ] Client acknowledges the rebuild plan and timeline — Anne — **carried as C-01**
+- [ ] Review MVP 1 scope and `PROPOSED` decisions with the client — Anne — **carried as C-01**
+
+### Security hygiene (allowed by D-02)
+
+- [ ] Make the GitHub repo private — **still open, carried as C-02**
+- [x] Stop tracking `.env` and ignore env files (PR #2, reviewed by Herman) — Anne
+- [ ] Ask the client whether the prototype backend holds real data; client switches off the prototype backend
+      and its Google Maps connector once we no longer need them — Anne — **carried as C-04**
+
+### Client actions (long lead time — start now)
+
+- [ ] Client starts Meta Business verification and gets a dedicated phone number for Tafi's WhatsApp — **carried as C-04**
+- [ ] Client introduces at least one candidate pilot school — **carried as C-04**
+
+### User research
+
+- [ ] At least 2 conversations (school transport admin, driver, parent) before schools close for the term —
+      Anne and Herman — **carried as C-03**
+- [ ] Record findings in `docs/ux/ux-research.md` — **carried as C-03**
+
+### Close-out
+
+- [ ] Update product docs with research findings — **carried as C-03**
+- [x] Write [`sprint-1.md`](sprint-1.md)
+- [x] Sprint 0 review — team, Mon 6 Oct 2026
 
 ## Deliverables
 
-- `docs/README.md`, `docs/STATUS.md`, `docs/DECISIONS.md`
-- `docs/discovery/current-state.md`
-- `docs/product/{product-brief,mvp-scope,owner-decisions}.md`
-- `docs/research/{research-plan,tools-and-resources,competitor-notes}.md`
-- `docs/ux/{ux-research,user-flows,information-architecture}.md`
-- `docs/architecture/{architecture-options,architecture-decision,deployment}.md`
-- `docs/sprints/{roadmap,backlog,sprint-0}.md`
-- Updated `AGENTS.md`
+- Updated: `AGENTS.md`, `README.md`, `docs/README.md`, `docs/STATUS.md`, `docs/DECISIONS.md`
+- Updated: `docs/product/{owner-decisions,product-brief,mvp-scope}.md`
+- Updated: `docs/architecture/architecture-decision.md`
+- Updated: `docs/sprints/{roadmap,backlog,sprint-0}.md`
+- New: `docs/sprints/sprint-1.md`
+- User conversation notes in `docs/ux/ux-research.md`
 
-## Exit Criteria
+## Definition of Done (exit criteria)
 
-Sprint 0 is complete only when:
+- [x] Product direction, first customer and billing model recorded in `DECISIONS.md`
+- [x] Architecture direction decided
+- [ ] MVP 1 scope reviewed with the client — **carried as C-01**
+- [ ] Repo private; no secrets tracked — **partly done** (`.env` untracked in PR #2; repos still public, old keys
+      remain in git history) — **carried as C-02**
+- [ ] At least 2 user conversations recorded — **carried as C-03**
+- [ ] Client has started WhatsApp verification and the pilot school search — **carried as C-04**
+- [x] Sprint 1 written — [`sprint-1.md`](sprint-1.md) (agreement at the kickoff, 19 Oct)
 
-- product direction is understood
-- primary user is agreed
-- MVP scope is agreed
-- major assumptions are visible
-- architecture direction is agreed or explicitly deferred
-- UX research questions are defined
-- Sprint 1 is ready
+## Review & close-out
+
+**Team review held Mon 6 Oct 2026 (Anne, Herman).** _Closed with four exit criteria not met; each is client- or
+interview-dependent rather than team-dependent. They are carried, with owners and dates — not dropped._
+The client-facing review of the MVP 1 scope (C-01) happens in the 7–16 Oct window and again at the Sprint 1 demo
+on Fri 30 Oct.
+
+### What Sprint 0 delivered
+
+- Product direction confirmed by the client: Tafi is a **parent safety service** — parents get WhatsApp updates
+  about their child's trip. Schools are the first customers (D-04, D-05).
+- Commercial model decided: **Tafi bills schools, schools bill parents**; pricing is configurable by the client
+  (D-06, D-07).
+- Architecture decided: **rebuild** as a modular monolith on the team stack; Lovable and the prototype are
+  reference material only (D-08, D-09, D-10).
+- Delivery window agreed: **3 months, 4 max**, pilot-ready by end of January 2027 (D-11).
+- Parent channel decided: **WhatsApp only, no parent app** (D-12).
+- MVP 1 scope, roadmap, backlog, risk list and Sprint 1 plan written.
+
+### What was not finished
+
+| ID | Carry-over | Owner | Due | Why it is open |
+|---|---|---|---|---|
+| C-01 | Client acknowledges the rebuild plan and reviews the MVP 1 scope and `PROPOSED` decisions | Anne | 16 Oct | Needs a client conversation |
+| C-02 | Make both GitHub repos private and deal with the keys exposed in git history | Herman | 16 Oct | Historically public repo; `.env` still in old commits |
+| C-03 | At least 2 user conversations (school transport admin, driver, parent) recorded in `ux/ux-research.md` | Anne, Herman | 16 Oct | Needs access to real users before Term 3 closes |
+| C-04 | Client long-lead actions: Meta Business verification + WhatsApp number, pilot school introduction, confirm prototype data and switch off the prototype backend | Client (Anne to chase) | 16 Oct | Client-owned |
+
+### Notes for the close-out
+
+- **C-02 is the most urgent.** Both repos return public without authentication and `.env` (publishable Supabase
+  keys and a Google Maps browser key) is still in the git history, even though the file was untracked in PR #2.
+  Untracking does not remove a secret. See the Sprint 1 plan.
+- `PROPOSED` rows in [`../product/owner-decisions.md`](../product/owner-decisions.md) are **not** decisions yet.
+  The MVP 1 scope in [`../product/mvp-scope.md`](../product/mvp-scope.md) rests on them, so C-01 matters.
+- No MVP code was written in Sprint 0. Prototype code in `src/` and `supabase/` was not modified.
+
+## Next sprint
+
+**Sprint 1 (19–30 Oct): UX + Foundation** — full plan in [`sprint-1.md`](sprint-1.md).
+Wireframes for the MVP 1 flows; repo layout, Docker Compose and CI; technical spikes (driver location, maps/ETA,
+worker choice); WhatsApp message templates drafted.

@@ -1,54 +1,60 @@
-# Tafi MVP Scope
+# Tafi MVP 1 Scope (schools)
 
-> Built around **user value**, not database tables. **Existing code ≠ MVP requirement.**
-> Priorities are hypotheses until the owner confirms [`owner-decisions.md`](owner-decisions.md).
+> Built around the parent safety promise (D-04), sold to schools (D-05). **Prototype code ≠ requirement.**
+> Sprint numbers refer to [`../sprints/roadmap.md`](../sprints/roadmap.md).
 
-## Must Have
+## Must have
 
-- School onboarding + first admin user (fixes the current dead-end).
-- Authentication (sign in, invite/accept, password reset).
-- Students + guardians management.
-- Routes + vehicles + drivers management.
-- Assign students to routes; drivers to vehicles.
-- Reliable feedback on every action (success/error).
-- Mobile-usable core screens.
+- Tafi platform admin onboards a school and its first admin.
+- Sign in, invite/accept, password reset; roles: platform admin, school admin, driver.
+- Students and guardians (more than one guardian per student; WhatsApp numbers in E.164); guardian consent record.
+- Routes with stops; vehicles; drivers; assignments.
+- Driver phone web app: today's trips, start/end trip, mark boarded / dropped off / absent, share location.
+- Parent WhatsApp messages: trip started, boarded, bus approaching, dropped off.
+- Notification log with delivery status and retries.
+- Clear feedback on every action; mobile-first screens.
 
-## Should Have
+## Should have
 
-- Term-based billing: terms → invoices → record payments → status.
-- Parent notification of the day's run (channel TBD: WhatsApp/SMS).
-- Student QR/ID generation (read-only tag at minimum).
+- CSV import of students and guardians (fast onboarding).
+- School admin live trip view (which children are on which bus now).
+- School → parent fees: terms, invoices, manually recorded payments.
+- Platform plans and pricing editable by the client.
+- Tafi → school invoices from configured pricing (manual collection).
 
-## Could Have
+## Could have
 
-- Route pickup map / basic route ordering.
-- Driver check-in scan flow.
-- Simple reporting (outstanding balances, ridership).
+- Route map and stop ordering.
+- QR-scan check-in.
+- SMS fallback when WhatsApp fails.
+- Simple reports (trips, notifications delivered, outstanding fees).
 
-## Not Now
+## Not now
 
-- Live GPS tracking / telematics hardware.
+- Independent transport providers (later scope, D-05).
+- Parent app.
 - M-Pesa automation.
-- Parent mobile app.
-- Multi-school operator portal.
-- Advanced analytics, exports, notifications center.
+- GPS hardware / telematics.
+- Advanced analytics.
 
 ## Feature table
 
-| Feature | User | Problem solved | MVP priority | Dependency | Status |
+| Feature | User | Problem solved | Priority | Sprint | Prototype has it? |
 |---|---|---|---|---|---|
-| School self-onboarding + first admin | School admin | Can't start using Tafi today | Must | Auth | Not started |
-| Invite & accept users | School admin / Tafi | Controlled access | Must | Auth | Exists (needs review) |
-| Password reset | All | Locked-out users | Must | Auth | Missing |
-| Students & guardians | School admin | Know who travels | Must | Onboarding | Exists (needs QA) |
-| Routes, vehicles, drivers | School admin | Run the fleet | Must | Onboarding | Exists (needs QA) |
-| Action feedback (toasts) | All | Actions silently do nothing | Must | — | Broken |
-| Terms → invoices → payments | School admin | Bill families | Should | Students | Exists (needs QA) |
-| Parent notification of run | Parent | Safety / status | Should | Routes + students | Missing |
-| QR tag generation | School admin | Identify students | Could | Students | Broken (regen) |
-| Route pickup map | School admin | Plan trips | Could | Geo data | Exists |
-| Driver scan check-in | Driver | Confirm boarding | Could | QR + roles | Missing |
-| Live tracking | Parent | Real-time safety | Not now | Hardware/provider | Missing |
-| M-Pesa automation | School/operator | Collect fees | Not now | Provider | Missing |
+| School onboarding by Tafi admin | Platform admin | Schools can start using Tafi | Must | 2 | Broken (first-school dead-end) |
+| Auth: sign in, invite, reset | All | Controlled access, recovery | Must | 2 | Partial (no reset) |
+| Students, guardians, consent | School admin | Know who travels and who to notify | Must | 3 | Partial (one guardian, no consent) |
+| Routes, stops, vehicles, drivers | School admin | Run the fleet | Must | 3 | Partial (stops unused) |
+| Driver trip app + check-in | Driver | Record boarding and drop-off | Must | 4 | No |
+| Live location during trip | Driver → parent | Power "bus approaching" | Must | 4 | No |
+| Parent WhatsApp messages | Parent | Peace of mind; fewer calls | Must | 5 | No |
+| Notification log | School admin | Prove messages were sent | Must | 5 | No |
+| CSV import | School admin | Onboard in a day | Should | 3 | No |
+| Live trip view | School admin | See buses now | Should | 5 | No |
+| School → parent fees | School admin | Track transport fees | Should | 6 | Yes (needs fixes) |
+| Configurable platform pricing | Client | Change prices without developers | Should | 6 | No |
+| Tafi → school invoices | Client | Get paid | Should | 6 | No |
+| QR check-in | Driver | Faster boarding | Could | Later | Broken (regenerate) |
+| SMS fallback | Parent | Reach parents without WhatsApp | Could | Later | No |
 
-**Scope rule:** do not add a feature just because a table already exists for it.
+**Scope rule:** do not add a feature just because the prototype or a table has it.

@@ -1,29 +1,25 @@
-# Welcome to your Lovable project
+# Tafi
 
-This project was built with [Lovable](https://lovable.dev).
+A parent safety service for transport in Kenya. Parents get WhatsApp updates when their child boards, is dropped
+off, or the bus is approaching. Schools are the first customers; other transport providers follow.
 
-## Build with Lovable
+## Status
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+**Sprint 1 — UX + Foundation (19–30 Oct 2026).** Sprint 0 closed on 6 Oct 2026.
+See [`docs/STATUS.md`](docs/STATUS.md), [`docs/sprints/sprint-0.md`](docs/sprints/sprint-0.md) and
+[`docs/sprints/sprint-1.md`](docs/sprints/sprint-1.md).
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+## Repository contents
 
-## Development
+- `docs/` — planning, decisions, research and sprints. Start at [`docs/README.md`](docs/README.md).
+- `src/`, `supabase/`, `tafi-landing.html` — the client-supplied **prototype** (built with Lovable). Reference only;
+  it will be replaced by the rebuild. Do not extend it.
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+## Planned stack
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+React · FastAPI · PostgreSQL · Redis · background worker · Docker Compose · DigitalOcean.
+Details: [`docs/architecture/architecture-decision.md`](docs/architecture/architecture-decision.md).
 
-## Built with
+## Contributing
 
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
+See [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) and [`AGENTS.md`](AGENTS.md).
