@@ -231,19 +231,28 @@ def update_stop(stop_id: uuid.UUID, payload: StopUpdate, admin: SchoolAdmin, db:
 def remove_stop(stop_id: uuid.UUID, admin: SchoolAdmin, db: DbSession) -> RouteDetail:
     """Remove a stop no child uses, and close the gap in the order."""
     stop = get_owned_or_404(db, Stop, stop_id, admin, what="stop")
-    in_use = db.scalar(
-        select(func.count(StudentRouteAssignment.id)).where(
-            or_(
-                StudentRouteAssignment.pickup_stop_id == stop.id,
-                StudentRouteAssignment.dropoff_stop_id == stop.id,
+    uses = list(
+        db.scalars(
+            select(StudentRouteAssignment).where(
+                or_(
+                    StudentRouteAssignment.pickup_stop_id == stop.id,
+                    StudentRouteAssignment.dropoff_stop_id == stop.id,
+                )
             )
         )
     )
-    if in_use:
+    if any(assignment.active_to is None for assignment in uses):
         raise HTTPException(
             status.HTTP_409_CONFLICT,
             "Children are assigned to this stop. Move them to another stop first.",
         )
+    # Past assignments keep their dates and route; they simply lose the removed stop.
+    for assignment in uses:
+        if assignment.pickup_stop_id == stop.id:
+            assignment.pickup_stop_id = None
+        if assignment.dropoff_stop_id == stop.id:
+            assignment.dropoff_stop_id = None
+    db.flush()
     route = get_owned_or_404(db, Route, stop.route_id, admin, what="route")
     db.delete(stop)
     db.flush()

@@ -6,22 +6,28 @@ Rules (D-22):
   is linked to the existing guardian, never copied.
 - The school can correct a guardian's details until the guardian confirms them; after that the
   guardian owns them.
+
+Route assignment (S3-09): a child has at most one current route. Changes take effect today
+(Kenya time). Moving to another route ends the current assignment and keeps it as history.
 """
 
 import uuid
 from collections import defaultdict
+from datetime import date, datetime, timedelta, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app.api.deps import DbSession, SchoolAdmin, get_owned_or_404
 from app.models.guardian import Guardian, GuardianStatus, StudentGuardian
 from app.models.student import EmergencyContact, Student, StudentStatus
+from app.models.transport import Route, Stop, StudentRouteAssignment
 from app.models.user import Membership
 from app.schemas.students import (
     ChildBrief,
+    CurrentRoute,
     EmergencyContactCreate,
     EmergencyContactRead,
     EmergencyContactUpdate,
@@ -30,6 +36,9 @@ from app.schemas.students import (
     GuardianRead,
     GuardianUpdate,
     LinkedGuardian,
+    RouteAssignmentRead,
+    RouteAssignmentSet,
+    StopBrief,
     StudentCreate,
     StudentDetail,
     StudentSummary,
@@ -40,6 +49,14 @@ router = APIRouter(prefix="/api/v1/school", tags=["school"])
 
 # Written as a number: Starlette renamed the 422 constant, and both spellings exist in the wild.
 UNPROCESSABLE = 422
+
+# Kenya is UTC+3 all year (no daylight saving), so a fixed offset needs no time-zone database.
+SCHOOL_TIMEZONE = timezone(timedelta(hours=3), "EAT")
+
+
+def today() -> date:
+    """The school's date. Pilot schools are in Kenya; make this per-school if that changes."""
+    return datetime.now(SCHOOL_TIMEZONE).date()
 
 
 # --- Helpers --------------------------------------------------------------------------------
@@ -74,6 +91,57 @@ def guardians_by_student(
     return grouped
 
 
+def current_routes(db: Session, student_ids: list[uuid.UUID]) -> dict[uuid.UUID, CurrentRoute]:
+    """Every child's current route and stops, in one query."""
+    if not student_ids:
+        return {}
+    pickup = aliased(Stop)
+    dropoff = aliased(Stop)
+    rows = db.execute(
+        select(StudentRouteAssignment, Route, pickup, dropoff)
+        .join(Route, Route.id == StudentRouteAssignment.route_id)
+        .outerjoin(pickup, pickup.id == StudentRouteAssignment.pickup_stop_id)
+        .outerjoin(dropoff, dropoff.id == StudentRouteAssignment.dropoff_stop_id)
+        .where(
+            StudentRouteAssignment.student_id.in_(student_ids),
+            StudentRouteAssignment.active_to.is_(None),
+        )
+    ).all()
+
+    def brief(stop: Stop | None) -> StopBrief | None:
+        return StopBrief(id=stop.id, name=stop.name, sequence=stop.sequence) if stop else None
+
+    return {
+        assignment.student_id: CurrentRoute(
+            route_id=route.id,
+            route_code=route.code,
+            route_name=route.name,
+            pickup_stop=brief(pickup_stop),
+            dropoff_stop=brief(dropoff_stop),
+            active_from=assignment.active_from,
+        )
+        for assignment, route, pickup_stop, dropoff_stop in rows
+    }
+
+
+def current_assignment(db: Session, student_id: uuid.UUID) -> StudentRouteAssignment | None:
+    return db.scalar(
+        select(StudentRouteAssignment).where(
+            StudentRouteAssignment.student_id == student_id,
+            StudentRouteAssignment.active_to.is_(None),
+        )
+    )
+
+
+def end_assignment(db: Session, assignment: StudentRouteAssignment) -> None:
+    """Close an assignment today. One that started today leaves no history worth keeping."""
+    if assignment.active_from >= today():
+        db.delete(assignment)
+    else:
+        assignment.active_to = today()
+    db.flush()
+
+
 def student_detail(db: Session, student: Student) -> StudentDetail:
     contacts = db.scalars(
         select(EmergencyContact)
@@ -87,6 +155,7 @@ def student_detail(db: Session, student: Student) -> StudentDetail:
         grade=student.grade,
         status=student.status,
         guardians=guardians_by_student(db, [student.id])[student.id],
+        route=current_routes(db, [student.id]).get(student.id),
         emergency_contacts=[EmergencyContactRead.model_validate(c) for c in contacts],
     )
 
@@ -176,13 +245,27 @@ def list_students(
     db: DbSession,
     q: Annotated[str | None, Query(max_length=100)] = None,
     student_status: Annotated[StudentStatus | None, Query(alias="status")] = None,
+    route_id: uuid.UUID | None = None,
     limit: Annotated[int, Query(ge=1, le=500)] = 200,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> list[StudentSummary]:
-    """Children in the school. `q` searches child names, guardian names and numbers."""
+    """Children in the school.
+
+    `q` searches child names, guardian names and numbers; `route_id` keeps the children who
+    ride that route now.
+    """
     query = select(Student).where(Student.organization_id == admin.organization_id)
     if student_status is not None:
         query = query.where(Student.status == student_status)
+    if route_id is not None:
+        query = query.where(
+            Student.id.in_(
+                select(StudentRouteAssignment.student_id).where(
+                    StudentRouteAssignment.route_id == route_id,
+                    StudentRouteAssignment.active_to.is_(None),
+                )
+            )
+        )
     if q and q.strip():
         like = f"%{q.strip()}%"
         digits = "".join(character for character in q if character.isdigit()).lstrip("0")
@@ -205,7 +288,9 @@ def list_students(
             query.order_by(Student.last_name, Student.first_name).limit(limit).offset(offset)
         )
     )
-    guardians = guardians_by_student(db, [student.id for student in students])
+    ids = [student.id for student in students]
+    guardians = guardians_by_student(db, ids)
+    routes = current_routes(db, ids)
     return [
         StudentSummary(
             id=student.id,
@@ -214,6 +299,7 @@ def list_students(
             grade=student.grade,
             status=student.status,
             guardians=guardians[student.id],
+            route=routes.get(student.id),
         )
         for student in students
     ]
@@ -261,6 +347,10 @@ def update_student(
             setattr(student, field, changes[field])
     if "grade" in changes:
         student.grade = changes["grade"] or None
+    if changes.get("status") == StudentStatus.INACTIVE:
+        assignment = current_assignment(db, student.id)
+        if assignment is not None:
+            end_assignment(db, assignment)
     db.commit()
     db.refresh(student)
     return student_detail(db, student)
@@ -328,6 +418,86 @@ def remove_guardian_link(
         set_primary(db, student.id, remaining[0])
     db.commit()
     return student_detail(db, student)
+
+
+# --- A child's route (S3-09) ----------------------------------------------------------------
+
+
+@router.put("/students/{student_id}/route", response_model=StudentDetail)
+def set_route(
+    student_id: uuid.UUID, payload: RouteAssignmentSet, admin: SchoolAdmin, db: DbSession
+) -> StudentDetail:
+    """Put a child on a route with their stops, or move them. Takes effect today."""
+    student = get_owned_or_404(db, Student, student_id, admin, what="child")
+    if student.status != StudentStatus.ACTIVE:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Make this child active first")
+    route = get_owned_or_404(db, Route, payload.route_id, admin, what="route")
+    if not route.is_active:
+        raise HTTPException(UNPROCESSABLE, f"Route {route.code} is not running")
+    for stop_id in (payload.pickup_stop_id, payload.dropoff_stop_id):
+        if stop_id is not None:
+            stop = get_owned_or_404(db, Stop, stop_id, admin, what="stop")
+            if stop.route_id != route.id:
+                raise HTTPException(UNPROCESSABLE, f"{stop.name} is not on route {route.code}")
+
+    current = current_assignment(db, student.id)
+    if current is not None and current.route_id == route.id:
+        # Same route, different stops: no new history.
+        current.pickup_stop_id = payload.pickup_stop_id
+        current.dropoff_stop_id = payload.dropoff_stop_id
+    else:
+        if current is not None:
+            end_assignment(db, current)
+        db.add(
+            StudentRouteAssignment(
+                organization_id=admin.organization_id,
+                student_id=student.id,
+                route_id=route.id,
+                pickup_stop_id=payload.pickup_stop_id,
+                dropoff_stop_id=payload.dropoff_stop_id,
+                active_from=today(),
+            )
+        )
+    db.commit()
+    return student_detail(db, student)
+
+
+@router.delete("/students/{student_id}/route", response_model=StudentDetail)
+def remove_from_route(student_id: uuid.UUID, admin: SchoolAdmin, db: DbSession) -> StudentDetail:
+    """Take a child off school transport from today."""
+    student = get_owned_or_404(db, Student, student_id, admin, what="child")
+    current = current_assignment(db, student.id)
+    if current is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "This child is not on a route")
+    end_assignment(db, current)
+    db.commit()
+    return student_detail(db, student)
+
+
+@router.get("/students/{student_id}/route-history", response_model=list[RouteAssignmentRead])
+def route_history(
+    student_id: uuid.UUID, admin: SchoolAdmin, db: DbSession
+) -> list[RouteAssignmentRead]:
+    """Every route the child has been on, newest first."""
+    student = get_owned_or_404(db, Student, student_id, admin, what="child")
+    rows = db.execute(
+        select(StudentRouteAssignment, Route)
+        .join(Route, Route.id == StudentRouteAssignment.route_id)
+        .where(StudentRouteAssignment.student_id == student.id)
+        .order_by(StudentRouteAssignment.active_from.desc())
+    ).all()
+    return [
+        RouteAssignmentRead(
+            route_id=route.id,
+            route_code=route.code,
+            route_name=route.name,
+            pickup_stop_id=assignment.pickup_stop_id,
+            dropoff_stop_id=assignment.dropoff_stop_id,
+            active_from=assignment.active_from,
+            active_to=assignment.active_to,
+        )
+        for assignment, route in rows
+    ]
 
 
 # --- Emergency contacts ---------------------------------------------------------------------

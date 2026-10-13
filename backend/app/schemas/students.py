@@ -1,6 +1,7 @@
 """Typed contracts for a school's students, guardians and emergency contacts."""
 
 import uuid
+from datetime import date
 from typing import Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
@@ -80,6 +81,54 @@ class EmergencyContactRead(BaseModel):
     relationship: str | None
 
 
+# --- Route assignment (S3-09) ---------------------------------------------------------------
+
+
+class StopBrief(BaseModel):
+    """A stop as seen from a child."""
+
+    id: uuid.UUID
+    name: str
+    sequence: int
+
+
+class CurrentRoute(BaseModel):
+    """The route a child rides now, and where they get on and off."""
+
+    route_id: uuid.UUID
+    route_code: str
+    route_name: str
+    pickup_stop: StopBrief | None
+    dropoff_stop: StopBrief | None
+    active_from: date
+
+
+class RouteAssignmentSet(BaseModel):
+    """Put a child on a route, or move them. Takes effect today. At least one stop."""
+
+    route_id: uuid.UUID
+    pickup_stop_id: uuid.UUID | None = None
+    dropoff_stop_id: uuid.UUID | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one_stop(self) -> Self:
+        if self.pickup_stop_id is None and self.dropoff_stop_id is None:
+            raise ValueError("Choose a pickup stop, a drop-off stop, or both")
+        return self
+
+
+class RouteAssignmentRead(BaseModel):
+    """One period on one route, current or past."""
+
+    route_id: uuid.UUID
+    route_code: str
+    route_name: str
+    pickup_stop_id: uuid.UUID | None
+    dropoff_stop_id: uuid.UUID | None
+    active_from: date
+    active_to: date | None
+
+
 # --- Students -------------------------------------------------------------------------------
 
 
@@ -111,7 +160,7 @@ class StudentUpdate(BaseModel):
 
 
 class StudentSummary(BaseModel):
-    """A child in the list, with their guardians."""
+    """A child in the list, with their guardians and current route."""
 
     id: uuid.UUID
     first_name: str
@@ -119,6 +168,7 @@ class StudentSummary(BaseModel):
     grade: str | None
     status: StudentStatus
     guardians: list[LinkedGuardian]
+    route: CurrentRoute | None
 
 
 class StudentDetail(StudentSummary):
