@@ -6,7 +6,7 @@
 | Sprint | Dates | Status | Goal | Deliverables | Definition of Done |
 |---|---|---|---|---|---|
 | 0 — Discovery & Research | 5–16 Oct | ✅ Closed 6 Oct (C-01→C-04 carried) | Agree what Tafi is | Decisions, MVP 1 scope, user conversations, Sprint 1 plan | See [`sprint-0.md`](sprint-0.md) |
-| 1 — UX + Foundation | 19–30 Oct | Not started | Design the flows; stand up the base project | Wireframes (admin, driver, WhatsApp messages); `backend/` + `frontend/` scaffold; Docker Compose; CI; spike results; templates drafted | `docker compose up` runs api + db + redis + worker; CI green; client approves wireframes |
+| 1 — UX + Foundation | 6–9 Oct (was 19–30 Oct) | ✅ Closed 9 Oct (T1-03, T1-04, T1-05, T1-15 carried) | Design the flows; stand up the base project | Wireframes (admin, driver, WhatsApp messages); `backend/` + `frontend/` scaffold; Docker Compose; CI; spike results | `docker compose up` runs api + db + redis + worker; CI green; see [`sprint-1.md`](sprint-1.md) |
 | 2 — Auth + Tenancy | 2–13 Nov | Planned | Users, roles, organizations | Organizations, platform admin onboards a school, invites, sign in, password reset, roles; staging on DigitalOcean | A new school can be onboarded end to end on staging |
 | 3 — School Operations | 16–27 Nov | Planned | Data the parent messages depend on | Students, guardians (multiple, consent), routes + stops, vehicles, drivers, assignments, CSV import; WhatsApp templates submitted to Meta | A school's full roster can be set up in under a day |
 | 4 — Driver Trip App | 30 Nov–11 Dec | Planned | Record what happens on the bus | Driver web app: today's trips, start/end, boarded/dropped off/absent, location sharing | A test trip records every event and a location trail |

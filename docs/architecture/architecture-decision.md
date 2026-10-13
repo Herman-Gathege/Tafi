@@ -1,6 +1,7 @@
 # Architecture Decision
 
-> Status: **DECIDED** (5 Oct 2026, D-08). "Open technical questions" are settled in Sprint 1.
+> Status: **DECIDED** (5 Oct 2026, D-08). The Sprint 1 technical questions are answered in
+> [`spikes/sprint-1-spikes.md`](spikes/sprint-1-spikes.md) (8 Oct 2026).
 > This is Option A from [`architecture-options.md`](architecture-options.md).
 
 ## Decision
@@ -52,15 +53,27 @@ reference material.
 - **Kenyan defaults:** E.164 phone numbers, `Africa/Nairobi` timezone, KES.
 - **Migrations:** hand-written Alembic migrations, reviewed in PRs.
 
-## Open technical questions (Sprint 1 spikes)
+## Sprint 1 answers (T1-11 to T1-14)
 
-1. **Driver location:** can a browser web app keep sending location with the screen locked on Android and iPhone?
-   If not: a "keep screen on" trip mode, or a thin native wrapper later.
-2. **Maps and ETA:** Google Maps vs an OpenStreetMap-based option (cost); how to calculate "5 minutes away".
-3. **Worker:** Celery vs RQ vs APScheduler plus a queue.
-4. **PostgreSQL:** DigitalOcean Managed Database vs a container with a persistent volume.
-5. **Repo layout:** `backend/` + `frontend/` in this repo, with the prototype preserved on a tag or archive branch.
-6. **CI and registry:** which runner and image registry.
+| Question | Answer | Detail |
+|---|---|---|
+| Driver location while the screen is locked | **Not reliable in a browser.** Trip mode uses a wake lock and an explicit "keep this screen open" state; boarded/dropped off are taps and never depend on location | [T1-11](spikes/sprint-1-spikes.md#t1-11--driver-location-with-a-locked-screen) |
+| Maps and ETA | **Leaflet + OSM tiles** for display, **LocationIQ** for geocoding, and "5 minutes away" **computed locally** from GPS fixes — no paid routing call in the hot path | [T1-12](spikes/sprint-1-spikes.md#t1-12--maps-and-eta) |
+| Worker | **Celery + Celery Beat** (as built); swap cost is contained in `backend/app/worker/celery_app.py` | [T1-13](spikes/sprint-1-spikes.md#t1-13--worker-celery-vs-rq-vs-apscheduler) |
+| PostgreSQL | **Container locally; DigitalOcean Managed PostgreSQL (~USD 15/month) for staging and production** | [T1-14](spikes/sprint-1-spikes.md#t1-14--postgresql-managed-or-container) |
+
+## Repository layout (T1-06)
+
+- `backend/` — FastAPI service: API, models, Alembic migrations, Celery worker, tests.
+- `frontend/` — React + Vite web app; design tokens carried over from the prototype.
+- `docker-compose.yml`, `Makefile`, `.env.example` — the local development stack (api, db, redis, worker, web).
+- `.github/workflows/` — backend and frontend checks on every pull request.
+- The client's Lovable prototype is preserved read-only at the tag **`prototype-lovable-2026-07`** and removed
+  from the working tree (D-09, D-14).
+
+CI runs on GitHub Actions for every branch push and every pull request, with `backend` and `frontend` as separate
+workflows behind path filters. There is no image registry yet — the Sprint 1 stack builds locally, and the
+registry decision belongs with the Sprint 2 staging deployment.
 
 ## What could change this decision
 

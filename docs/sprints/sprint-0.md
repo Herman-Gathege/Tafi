@@ -26,10 +26,11 @@
 
 ### Security hygiene (allowed by D-02)
 
-- [ ] Make the GitHub repo private — **still open, carried as C-02**
-- [x] Stop tracking `.env` and ignore env files (PR #2, reviewed by Herman) — Anne
-- [ ] Ask the client whether the prototype backend holds real data; client switches off the prototype backend
-      and its Google Maps connector once we no longer need them — Anne — **carried as C-04**
+- [ ] Make the GitHub repo private (`annewaithaka/Tafi` is the only repo — D-15) — **still open, carried as C-02**
+- [x] Stop tracking `.env` and ignore env files (`fix/untrack-env`, reviewed by Herman) — Anne
+- [x] Ask the client whether the prototype backend holds real data — Anne — **done 6 Oct:** test data only,
+      nothing paid for besides Lovable; client approved deleting the Lovable project (D-14)
+- [ ] Client disconnects GitHub from the Lovable project, then deletes it — **carried as C-04**
 
 ### Client actions (long lead time — start now)
 
@@ -39,7 +40,7 @@
 ### User research
 
 - [ ] At least 2 conversations (school transport admin, driver, parent) before schools close for the term —
-      Anne and Herman — **carried as C-03**
+      Anne — **carried as C-03**
 - [ ] Record findings in `docs/ux/ux-research.md` — **carried as C-03**
 
 ### Close-out
@@ -62,8 +63,8 @@
 - [x] Product direction, first customer and billing model recorded in `DECISIONS.md`
 - [x] Architecture direction decided
 - [ ] MVP 1 scope reviewed with the client — **carried as C-01**
-- [ ] Repo private; no secrets tracked — **partly done** (`.env` untracked in PR #2; repos still public, old keys
-      remain in git history) — **carried as C-02**
+- [ ] Repo private; no secrets tracked — **partly done** (`.env` untracked via `fix/untrack-env`; repo still public;
+      old keys remain in git history but stop working once the Lovable project is deleted — D-14) — **carried as C-02**
 - [ ] At least 2 user conversations recorded — **carried as C-03**
 - [ ] Client has started WhatsApp verification and the pilot school search — **carried as C-04**
 - [x] Sprint 1 written — [`sprint-1.md`](sprint-1.md) (agreement at the kickoff, 19 Oct)
@@ -92,15 +93,17 @@ on Fri 30 Oct.
 | ID | Carry-over | Owner | Due | Why it is open |
 |---|---|---|---|---|
 | C-01 | Client acknowledges the rebuild plan and reviews the MVP 1 scope and `PROPOSED` decisions | Anne | 16 Oct | Needs a client conversation |
-| C-02 | Make both GitHub repos private and deal with the keys exposed in git history | Herman | 16 Oct | Historically public repo; `.env` still in old commits |
-| C-03 | At least 2 user conversations (school transport admin, driver, parent) recorded in `ux/ux-research.md` | Anne, Herman | 16 Oct | Needs access to real users before Term 3 closes |
-| C-04 | Client long-lead actions: Meta Business verification + WhatsApp number, pilot school introduction, confirm prototype data and switch off the prototype backend | Client (Anne to chase) | 16 Oct | Client-owned |
+| C-02 | Make `annewaithaka/Tafi` private and archive any other copy (D-15); purge `.env` from history (optional once the Lovable project is deleted — D-14) | Herman | 16 Oct | Repo still public; `.env` still in old commits |
+| C-03 | At least 2 user conversations (school transport admin, driver, parent) recorded in `ux/ux-research.md`, using [`../ux/interview-guide.md`](../ux/interview-guide.md) | Anne | 16 Oct | Needs access to real users before Term 3 closes |
+| C-04 | Client long-lead actions: Meta Business verification + WhatsApp number, pilot school introduction, delete the Lovable project (prototype data already confirmed test-only — D-14) | Client (Anne to chase) | 16 Oct | Client-owned |
 
 ### Notes for the close-out
 
-- **C-02 is the most urgent.** Both repos return public without authentication and `.env` (publishable Supabase
-  keys and a Google Maps browser key) is still in the git history, even though the file was untracked in PR #2.
-  Untracking does not remove a secret. See the Sprint 1 plan.
+- **C-02 and the exposed keys.** The repo is still public and `.env` (publishable Supabase keys and a Google Maps
+  browser key) is still in git history; untracking does not remove a secret. The keys belong to the client's
+  Lovable project, which the client confirmed held only test data and no paid services (D-14). Once the client
+  deletes that project (C-04) the keys stop working, so purging history becomes optional housekeeping. Making the
+  repo private is still required.
 - `PROPOSED` rows in [`../product/owner-decisions.md`](../product/owner-decisions.md) are **not** decisions yet.
   The MVP 1 scope in [`../product/mvp-scope.md`](../product/mvp-scope.md) rests on them, so C-01 matters.
 - No MVP code was written in Sprint 0. Prototype code in `src/` and `supabase/` was not modified.

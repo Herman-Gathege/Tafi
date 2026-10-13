@@ -20,13 +20,14 @@ current decision in under a minute.
 
 ## Current phase
 
-**Sprint 1 — UX + Foundation (19–30 Oct 2026).** Sprint 0 closed on 6 Oct 2026 with four carry-over items
-(C-01 to C-04) being cleared in the 7–16 Oct window. See [`sprints/sprint-0.md`](sprints/sprint-0.md#review--close-out)
-and [`sprints/sprint-1.md`](sprints/sprint-1.md). Live status: [`STATUS.md`](STATUS.md).
+**Sprint 1 closed on 9 Oct 2026; Sprint 2 — Auth + Tenancy is next.** See
+[`sprints/sprint-1.md`](sprints/sprint-1.md#review--close-out) and [`sprints/roadmap.md`](sprints/roadmap.md).
+What is still open is in [`../homework/README.md`](../homework/README.md). Live status: [`STATUS.md`](STATUS.md).
 
 ## Current branch
 
-`sprint-0` — Sprint 0 close-out and the Sprint 1 plan; to be merged into `main` by pull request.
+`feature/sprint-1-foundation` — Sprint 1 (foundation, wireframes, public/protected app); to be merged into `main`
+by pull request.
 
 ## Where things live
 
@@ -39,9 +40,12 @@ and [`sprints/sprint-1.md`](sprints/sprint-1.md). Live status: [`STATUS.md`](STA
 | MVP scope | [`product/mvp-scope.md`](product/mvp-scope.md) |
 | Roadmap | [`sprints/roadmap.md`](sprints/roadmap.md) |
 | Sprint 0 plan + close-out | [`sprints/sprint-0.md`](sprints/sprint-0.md) |
-| Sprint 1 plan (current) | [`sprints/sprint-1.md`](sprints/sprint-1.md) |
+| Sprint 1 plan + close-out | [`sprints/sprint-1.md`](sprints/sprint-1.md) |
 | Backlog | [`sprints/backlog.md`](sprints/backlog.md) |
+| MVP 1 wireframes (11 screens) | [`ux/wireframes.md`](ux/wireframes.md) |
+| Homework — what is left | [`../homework/README.md`](../homework/README.md) |
 | Architecture decision | [`architecture/architecture-decision.md`](architecture/architecture-decision.md) |
+| Sprint 1 spike answers | [`architecture/spikes/sprint-1-spikes.md`](architecture/spikes/sprint-1-spikes.md) |
 | Architecture options (history) | [`architecture/architecture-options.md`](architecture/architecture-options.md) |
 | Deployment model | [`architecture/deployment.md`](architecture/deployment.md) |
 | Prototype evidence report (detailed) | [`TAFI-CURRENT-STATE-AND-UX-DISCOVERY.md`](TAFI-CURRENT-STATE-AND-UX-DISCOVERY.md) |

@@ -16,13 +16,13 @@ Discovery → Research → Product decision → UX/UI → Architecture → Imple
 
 ## Current Phase
 
-**Sprint 1 — UX + Foundation (19–30 Oct 2026).** Sprint 0 closed on 6 Oct 2026; its four carry-over items
-(C-01 to C-04) are in [`docs/sprints/sprint-0.md`](docs/sprints/sprint-0.md#review--close-out) and the current
-plan is [`docs/sprints/sprint-1.md`](docs/sprints/sprint-1.md). Therefore:
+**Sprint 1 closed 9 Oct 2026; Sprint 2 — Auth + Tenancy is next.** Anything still open from Sprints 0 and 1 is in
+[`homework/`](homework/README.md), and the plan is [`docs/sprints/roadmap.md`](docs/sprints/roadmap.md). Therefore:
 
 - do not implement MVP features unless explicitly instructed
-- work to the Sprint 1 plan; security hygiene fixes stay allowed (repo visibility, secrets) — see `docs/DECISIONS.md` D-02
-- do not refactor or extend the prototype; it will be replaced
+- work to the sprint plan; security hygiene fixes stay allowed (repo visibility, secrets) — see `docs/DECISIONS.md` D-02
+- the MVP 1 target screens are the wireframes ([`docs/ux/wireframes.md`](docs/ux/wireframes.md)); the app keeps a public
+  side anyone can open and a protected side behind a session
 - use documentation to capture decisions
 - ask for clarification where product requirements are ambiguous
 - distinguish **FACT / OBSERVATION / ASSUMPTION / UNKNOWN**
@@ -67,6 +67,20 @@ Caddy/Nginx · DigitalOcean (Linux) · Git
 
 Documentation must be short, useful, current, decision-oriented, and owner-readable.
 Do not create documentation for the sake of documentation. See `docs/README.md`.
+
+## Working with sub-agents
+
+Split a task into independent workstreams and hand each one to a sub-agent, keeping the main thread for decisions,
+integration and verification. A sub-agent spends its own context reading, iterating and running checks, and returns
+only its result — that is how the team keeps throughput up and the token bill down.
+
+Delegate work that is independent of the other workstreams, has a named deliverable, and comes with the command
+that proves it works. Keep in the main thread: decisions, anything needing the user, edits that collide with
+another workstream, and the final review.
+
+Give every sub-agent the working directory and branch, the exact paths it may write, the deliverable, the
+verification command, and what to report back. One writer per file — name the off-limits paths so parallel
+workstreams cannot overwrite each other.
 
 ## Git Workflow
 
