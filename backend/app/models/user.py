@@ -15,10 +15,18 @@ if TYPE_CHECKING:
 
 
 class MembershipRole(enum.StrEnum):
-    """What someone may do inside one organization."""
+    """What someone may do inside one organization.
+
+    Stored as plain text (VARCHAR 32), so adding a role needs no migration.
+    """
 
     SCHOOL_ADMIN = "school_admin"
     DRIVER = "driver"
+    # D-21: optional second crew member; marks children on and off the bus.
+    CONDUCTOR = "conductor"
+
+
+CREW_ROLES = frozenset({MembershipRole.DRIVER, MembershipRole.CONDUCTOR})
 
 
 class User(Base):
