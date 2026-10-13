@@ -20,14 +20,15 @@ current decision in under a minute.
 
 ## Current phase
 
-**Sprint 1 closed on 9 Oct 2026; Sprint 2 — Auth + Tenancy is next.** See
-[`sprints/sprint-1.md`](sprints/sprint-1.md#review--close-out) and [`sprints/roadmap.md`](sprints/roadmap.md).
-What is still open is in [`../homework/README.md`](../homework/README.md). Live status: [`STATUS.md`](STATUS.md).
+**Sprint 2 closed on 13 Oct 2026; Sprint 3 — School Operations is next.** Accounts, roles, tenancy and school
+onboarding are in place. See [`delivery/sprint-2.md`](delivery/sprint-2.md) for what to open and what to expect,
+and [`sprints/roadmap.md`](sprints/roadmap.md) for what comes next. What is still open is in
+[`../homework/README.md`](../homework/README.md). Live status: [`STATUS.md`](STATUS.md).
 
 ## Current branch
 
-`feature/sprint-1-foundation` — Sprint 1 (foundation, wireframes, public/protected app); to be merged into `main`
-by pull request.
+`feature/sprint-1-foundation` — Sprint 1 and Sprint 2 stacked on it (foundation, wireframes, public/protected app,
+accounts and tenancy); to be merged into `main` by pull request.
 
 ## Where things live
 
@@ -41,6 +42,8 @@ by pull request.
 | Roadmap | [`sprints/roadmap.md`](sprints/roadmap.md) |
 | Sprint 0 plan + close-out | [`sprints/sprint-0.md`](sprints/sprint-0.md) |
 | Sprint 1 plan + close-out | [`sprints/sprint-1.md`](sprints/sprint-1.md) |
+| Sprint 2 plan + close-out | [`sprints/sprint-2.md`](sprints/sprint-2.md) |
+| Sprint 2 delivery (what to open) | [`delivery/sprint-2.md`](delivery/sprint-2.md) |
 | Backlog | [`sprints/backlog.md`](sprints/backlog.md) |
 | MVP 1 wireframes (11 screens) | [`ux/wireframes.md`](ux/wireframes.md) |
 | Homework — what is left | [`../homework/README.md`](../homework/README.md) |

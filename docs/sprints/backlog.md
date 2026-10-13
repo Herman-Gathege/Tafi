@@ -48,9 +48,9 @@ _Plan and close-out: [`sprint-1.md`](sprint-1.md). "Carried" items are in [`../.
 
 | ID | User story / task | Priority | Sprint | Dependency | Status |
 |---|---|---|---|---|---|
-| MVP-01 | As the Tafi admin, I onboard a school and invite its first admin | P0 | 2 | Foundation | Not started |
-| MVP-02 | As a user, I sign in, accept an invite and reset my password | P0 | 2 | MVP-01 | Not started |
-| MVP-03 | Roles: platform admin, school admin, driver | P0 | 2 | MVP-02 | Not started |
+| MVP-01 | As the Tafi admin, I onboard a school and invite its first admin | P0 | 2 | Foundation | Done |
+| MVP-02 | As a user, I sign in, accept an invite and reset my password | P0 | 2 | MVP-01 | Done |
+| MVP-03 | Roles: platform admin, school admin, driver | P0 | 2 | MVP-02 | Done (driver screens are Sprint 4) |
 | MVP-04 | As a school admin, I manage students and guardians (several per student, E.164 WhatsApp numbers) | P0 | 3 | MVP-03 | Not started |
 | MVP-05 | As a school admin, I record each guardian's consent to WhatsApp messages | P0 | 3 | MVP-04 | Not started |
 | MVP-06 | As a school admin, I manage routes and their stops | P0 | 3 | MVP-03 | Not started |
@@ -68,7 +68,7 @@ _Plan and close-out: [`sprint-1.md`](sprint-1.md). "Carried" items are in [`../.
 | MVP-18 | As the Tafi admin, I invoice schools from the configured pricing | P1 | 6 | MVP-17 | Not started |
 | MVP-19 | Every action gives clear feedback; screens work on a phone | P0 | All | — | Not started |
 | MVP-20 | Automated tests and CI for critical paths | P0 | 1 onward | Foundation | Not started |
-| MVP-21 | Staging (Sprint 2) and production (Sprint 7) on DigitalOcean with backups | P0 | 2, 7 | Foundation | Not started |
+| MVP-21 | Staging (Sprint 2) and production (Sprint 7) on DigitalOcean with backups | P0 | 2, 7 | Foundation | In progress — staging configuration and runbook written; not deployed |
 | MVP-22 | Privacy checklist: consent wording, data retention, ODPC obligations | P1 | 1, 7 | Client | Not started |
 
 ## Later
