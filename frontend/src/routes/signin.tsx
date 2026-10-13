@@ -1,35 +1,79 @@
-import { useNavigate } from "react-router-dom";
+import { useState, type FormEvent } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { startDevSession } from "@/lib/session";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ApiError } from "@/lib/api";
+import { useSignIn } from "@/lib/session";
 
 export function SignInPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const signIn = useSignIn();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  function enterDemo() {
-    startDevSession();
-    navigate("/app", { replace: true });
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    signIn.mutate(
+      { email, password },
+      {
+        onSuccess: (session) => {
+          const from = (location.state as { from?: string } | null)?.from;
+          const home = session.user.is_platform_admin ? "/app/admin" : "/app";
+          navigate(from ?? home, { replace: true });
+        },
+      },
+    );
   }
 
   return (
     <div className="mx-auto w-full max-w-md px-4 py-14">
       <Card>
         <CardHeader>
-          <CardTitle>School sign in</CardTitle>
-          <CardDescription>
-            Email and password sign-in, invitations and password reset arrive in Sprint 2 with the accounts work.
-          </CardDescription>
+          <CardTitle>Sign in</CardTitle>
+          <CardDescription>School staff and Tafi staff use the same door.</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <p className="text-sm text-muted-foreground">
-            Until then you can walk through the school portal with a demo session. It is a development shortcut,
-            not a login.
-          </p>
-          <Button onClick={enterDemo}>Enter the demo</Button>
-          <p className="text-xs text-muted-foreground">
-            The demo session is stored in this browser only and clears when you sign out.
-          </p>
+        <CardContent>
+          <form onSubmit={onSubmit} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              />
+            </div>
+            {signIn.isError ? (
+              <p role="alert" className="text-sm text-destructive">
+                {signIn.error instanceof ApiError ? signIn.error.message : "Could not sign in."}
+              </p>
+            ) : null}
+            <Button type="submit" disabled={signIn.isPending}>
+              {signIn.isPending ? "Signing in…" : "Sign in"}
+            </Button>
+            <Link to="/forgot-password" className="text-sm text-muted-foreground underline">
+              Forgot your password?
+            </Link>
+          </form>
         </CardContent>
       </Card>
     </div>

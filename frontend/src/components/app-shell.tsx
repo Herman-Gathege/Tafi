@@ -1,19 +1,22 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
-import { endDevSession } from "@/lib/session";
+import { useSession, useSignOut } from "@/lib/session";
 import { cn } from "@/lib/utils";
-
-const navigation = [
-  { to: "/app", label: "Dashboard", end: true },
-  { to: "/app/organizations", label: "Organizations", end: false },
-];
 
 export function AppShell() {
   const navigate = useNavigate();
+  const signOut = useSignOut();
+  const { user, school, isPlatformAdmin } = useSession();
 
-  function signOut() {
-    endDevSession();
-    navigate("/", { replace: true });
+  const navigation = [
+    { to: "/app", label: "Today", end: true },
+    ...(isPlatformAdmin
+      ? [{ to: "/app/admin", label: "Platform admin", end: false }]
+      : []),
+  ];
+
+  function onSignOut() {
+    signOut.mutate(undefined, { onSettled: () => navigate("/", { replace: true }) });
   }
 
   return (
@@ -29,7 +32,9 @@ export function AppShell() {
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <NavLink to="/app" className="font-display text-lg font-bold tracking-tight">
             Tafi
-            <span className="ml-2 text-xs font-medium text-muted-foreground">school portal</span>
+            <span className="ml-2 text-xs font-medium text-muted-foreground">
+              {school ? school.organization_name : "school portal"}
+            </span>
           </NavLink>
           <div className="flex items-center gap-2">
             <nav aria-label="Main">
@@ -54,12 +59,16 @@ export function AppShell() {
                 ))}
               </ul>
             </nav>
+            <span className="hidden text-sm text-muted-foreground sm:inline">
+              {user?.name ?? ""}
+            </span>
             <button
               type="button"
-              onClick={signOut}
+              onClick={onSignOut}
+              disabled={signOut.isPending}
               className="inline-flex h-9 items-center rounded-md px-3 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
             >
-              Sign out
+              {signOut.isPending ? "Signing out…" : "Sign out"}
             </button>
           </div>
         </div>
@@ -69,7 +78,7 @@ export function AppShell() {
         role="status"
         className="border-b border-border bg-brand-soft px-4 py-2 text-center text-xs text-foreground"
       >
-        Development build — you are signed in with a demo session. Real accounts arrive in Sprint 2.
+        Development build — accounts work; email and WhatsApp delivery arrive in Sprint 5.
       </p>
 
       <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
