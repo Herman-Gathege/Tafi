@@ -12,7 +12,7 @@ _Closed 6 Oct 2026. "Carried" items are C-01 to C-04 in [`sprint-0.md`](sprint-0
 | S0-01 | Confirm product owner, direction, first customer, billing model | P0 | Anne | Done |
 | S0-02 | Decide architecture and delivery window | P0 | Anne, Herman | Done |
 | S0-03 | Client acknowledges rebuild plan | P0 | Anne | Carried (C-01) |
-| S0-04 | Review MVP 1 scope and PROPOSED decisions with client | P0 | Anne | Carried (C-01) |
+| S0-04 | Review MVP 1 scope and PROPOSED decisions with client | P0 | Anne | Carried (C-01) — wireframes approved (D-23), scope answers recorded (D-20 to D-22) |
 | S0-05 | Stop tracking `.env`; ignore env files | P0 | Anne | Done (`fix/untrack-env`) |
 | S0-06 | Confirm prototype data with the client | P1 | Anne | Done — test data only, nothing paid (D-14) |
 | S0-07 | Client starts Meta Business verification + WhatsApp number | P0 | Client | Carried (C-04) |
@@ -30,9 +30,9 @@ _Plan and close-out: [`sprint-1.md`](sprint-1.md). "Carried" items are in [`../.
 |---|---|---|---|---|
 | T1-01 | School admin wireframes | P0 | Anne | Done — four school portal screens |
 | T1-02 | Driver wireframes | P0 | Anne | Done — three crew app screens |
-| T1-03 | Parent WhatsApp templates and failure behaviour | P0 | Anne | Carried (H1-1) |
+| T1-03 | Parent WhatsApp templates and failure behaviour | P0 | Anne | Carried (H1-1) → S3-12 |
 | T1-04 | Retire stale hypothesis labels in product/UX docs | P1 | Anne | Carried (H1-4) |
-| T1-05 | Client review: MVP 1 scope + `PROPOSED` decisions (C-01) | P0 | Anne | Carried (H1-3) |
+| T1-05 | Client review: MVP 1 scope + `PROPOSED` decisions (C-01) | P0 | Anne | Carried (H1-3) — partly answered 14 Oct (D-20 to D-23) |
 | T1-06 | Repo layout: `backend/` + `frontend/`, prototype archived | P0 | Herman | Done |
 | T1-07 | Backend skeleton (FastAPI, settings, logging, health, Alembic, Pytest) | P0 | Herman | Done |
 | T1-08 | Frontend skeleton (React, routing, API client, base layout) | P0 | Herman | Done |
@@ -44,39 +44,64 @@ _Plan and close-out: [`sprint-1.md`](sprint-1.md). "Carried" items are in [`../.
 | T1-14 | Spike: DigitalOcean Managed Database vs container | P1 | Herman | Done |
 | T1-15 | Spike: WhatsApp Cloud API template categories, approval time, cost | P0 | Anne | Carried (H1-2) |
 
+## Sprint 3 — School Operations (14–28 Oct, in progress)
+
+_Plan: [`sprint-3.md`](sprint-3.md). Owner Anne, reviewer Herman (D-25)._
+
+| ID | Task | Priority | Owner | Status |
+|---|---|---|---|---|
+| S3-01 | Migrations and models (students, guardians, consents, invites, emergency contacts, stop-change requests, routes, stops, vehicles, route runs, assignments, child cards); `conductor` role | P0 | Anne | Not started |
+| S3-02 | Tenancy guard and cross-school tests for every new route | P0 | Anne | Not started |
+| S3-03 | Students API | P0 | Anne | Not started |
+| S3-04 | Guardians API, E.164 validation, emergency contacts | P0 | Anne | Not started |
+| S3-05 | Guardian invite link and public registration page | P0 | Anne | Not started |
+| S3-06 | Consent record, withdrawal and `can_message` check | P0 | Anne | Not started |
+| S3-07 | Routes and ordered stops API | P0 | Anne | Not started |
+| S3-08 | Vehicles, crew invites and route runs (driver required, conductor optional) | P0 | Anne | Not started |
+| S3-09 | Student route assignments with pickup and drop-off stops | P0 | Anne | Not started |
+| S3-10 | School portal screens: Children & guardians; Routes, vehicles & crew; stop-change requests | P0 | Anne | Not started |
+| S3-11 | CSV import with preview and per-row errors | P1 | Anne | Not started |
+| S3-12 | WhatsApp template copy drafted and submitted to Meta | P0 | Anne | Blocked on client (C-04) |
+| S3-13 | Data-model doc; update wireframes and owner-decisions docs | P1 | Anne | Not started |
+
 ## MVP 1
 
 | ID | User story / task | Priority | Sprint | Dependency | Status |
 |---|---|---|---|---|---|
 | MVP-01 | As the Tafi admin, I onboard a school and invite its first admin | P0 | 2 | Foundation | Done |
 | MVP-02 | As a user, I sign in, accept an invite and reset my password | P0 | 2 | MVP-01 | Done |
-| MVP-03 | Roles: platform admin, school admin, driver | P0 | 2 | MVP-02 | Done (driver screens are Sprint 4) |
-| MVP-04 | As a school admin, I manage students and guardians (several per student, E.164 WhatsApp numbers) | P0 | 3 | MVP-03 | Not started |
-| MVP-05 | As a school admin, I record each guardian's consent to WhatsApp messages | P0 | 3 | MVP-04 | Not started |
-| MVP-06 | As a school admin, I manage routes and their stops | P0 | 3 | MVP-03 | Not started |
-| MVP-07 | As a school admin, I manage vehicles and drivers and assign students to stops | P0 | 3 | MVP-04, MVP-06 | Not started |
+| MVP-03 | Roles: platform admin, school admin, driver, conductor (D-21) | P0 | 2, 3 | MVP-02 | Partly done — `conductor` added in Sprint 3 |
+| MVP-04 | As a school admin, I manage students and guardians (several per student, E.164 WhatsApp numbers, emergency contact) | P0 | 3 | MVP-03 | Not started |
+| MVP-05 | As a school admin, I record each guardian's consent to WhatsApp messages; no message is sent without it (D-22) | P0 | 3 | MVP-04 | Not started |
+| MVP-06 | As a school admin, I manage routes and their ordered stops | P0 | 3 | MVP-03 | Not started |
+| MVP-07 | As a school admin, I manage vehicles and crew (driver required, conductor optional) and assign students to stops | P0 | 3 | MVP-04, MVP-06 | Not started |
 | MVP-08 | As a school admin, I import students and guardians from CSV | P1 | 3 | MVP-04 | Not started |
-| MVP-09 | As a driver, I see today's trips and start/end a trip | P0 | 4 | MVP-07 | Not started |
-| MVP-10 | As a driver, I mark each child boarded, dropped off or absent | P0 | 4 | MVP-09 | Not started |
-| MVP-11 | As a driver, my location is shared during an active trip | P0 | 4 | MVP-09, Sprint 1 spike | Not started |
-| MVP-12 | As a parent, I get WhatsApp messages: trip started, boarded, dropped off | P0 | 5 | MVP-10, S0-07 | Not started |
+| MVP-09 | As crew, I see today's trips and start/end a trip | P0 | 4 | MVP-07 | Not started |
+| MVP-10 | As crew (driver or conductor), I mark each child boarded, dropped off or absent; a driver alone can only mark while stopped; each event records who and how (D-21, D-24) | P0 | 4 | MVP-09 | Not started |
+| MVP-11 | As crew, my location is shared during an active trip | P0 | 4 | MVP-09, Sprint 1 spike | Not started |
+| MVP-12 | As a parent, I get WhatsApp messages: trip started, boarded, dropped off | P0 | 5 | MVP-10, MVP-05, S0-07 | Not started |
 | MVP-13 | As a parent, I get a "bus approaching" WhatsApp message | P0 | 5 | MVP-11 | Not started |
 | MVP-14 | As a school admin, I see a log of messages and their delivery status | P0 | 5 | MVP-12 | Not started |
 | MVP-15 | As a school admin, I see live trips and who is on each bus | P1 | 5 | MVP-10, MVP-11 | Not started |
 | MVP-16 | As a school admin, I manage terms, invoices and payments for transport fees | P1 | 6 | MVP-04 | Not started |
 | MVP-17 | As the Tafi admin, I edit plans and prices without developers | P1 | 6 | MVP-01 | Not started |
 | MVP-18 | As the Tafi admin, I invoice schools from the configured pricing | P1 | 6 | MVP-17 | Not started |
-| MVP-19 | Every action gives clear feedback; screens work on a phone | P0 | All | — | Not started |
-| MVP-20 | Automated tests and CI for critical paths | P0 | 1 onward | Foundation | Not started |
+| MVP-19 | Every action gives clear feedback; screens work on a phone | P0 | All | — | In progress |
+| MVP-20 | Automated tests and CI for critical paths | P0 | 1 onward | Foundation | In progress — CI and 24 tests in place |
 | MVP-21 | Staging (Sprint 2) and production (Sprint 7) on DigitalOcean with backups | P0 | 2, 7 | Foundation | In progress — staging configuration and runbook written; not deployed |
 | MVP-22 | Privacy checklist: consent wording, data retention, ODPC obligations | P1 | 1, 7 | Client | Not started |
+| MVP-23 | As a guardian, I open an invite link, confirm my details, add a second guardian or emergency contact, give consent and request a stop change (D-22) | P0 | 3 | MVP-04, MVP-05 | Not started |
+| MVP-24 | As a school admin, I approve or decline stop-change requests | P1 | 3 | MVP-23, MVP-07 | Not started |
+| MVP-25 | As a parent, I sign in to the web dashboard with a one-time code sent to my WhatsApp number (D-20) | P1 | 5 | MVP-12 | Not started |
+| MVP-26 | As a parent, I see my child's status and today's trip, mark them absent and contact the school on the dashboard (D-20) | P1 | 5 | MVP-25, MVP-10 | Not started |
 
 ## Later
 
 | ID | Item | Priority |
 |---|---|---|
-| LATER-01 | QR-scan check-in | P2 |
+| LATER-01 | Child ID card scanning, QR or NFC (D-24); data prepared in Sprints 3–4 | P2 |
 | LATER-02 | SMS fallback when WhatsApp fails | P2 |
 | LATER-03 | Simple reports | P2 |
-| LATER-04 | Independent transport providers (organization type `operator`) | P3 |
+| LATER-04 | Independent transport providers and operator portal (organization type `operator`) | P3 |
 | LATER-05 | M-Pesa payment automation | P3 |
+| LATER-06 | Attendance sync with the school's own system | P3 |
