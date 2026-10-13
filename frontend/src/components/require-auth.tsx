@@ -39,3 +39,22 @@ export function RequirePlatformAdmin() {
   }
   return <Outlet />;
 }
+
+/**
+ * School admins only (Sprint 3 school screens). The API enforces this too; this just keeps
+ * crew and Tafi staff away from screens that would only show them errors.
+ */
+export function RequireSchoolAdmin() {
+  const { isSignedIn, school, isLoading } = useSession();
+
+  if (isLoading) {
+    return <Checking />;
+  }
+  if (!isSignedIn) {
+    return <Navigate to="/signin" replace />;
+  }
+  if (school?.role !== "school_admin") {
+    return <Navigate to="/app" replace />;
+  }
+  return <Outlet />;
+}
