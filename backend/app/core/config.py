@@ -18,9 +18,22 @@ class Settings(BaseSettings):
 
     app_env: str = "local"
     log_level: str = "INFO"
-    secret_key: str = "change-me"
+    # Long enough to satisfy HMAC-SHA256 offline; replace it in every real environment.
+    secret_key: str = "local-development-secret-change-me-in-every-other-environment"
     database_url: str = "sqlite+pysqlite:///:memory:"
     redis_url: str = "redis://localhost:6379/0"
+
+    # Where the app is served from — used to build invite and reset links.
+    app_public_url: str = "http://localhost:5173"
+
+    # Sessions.
+    session_cookie_name: str = "tafi_session"
+    session_ttl_hours: int = 12
+    session_cookie_secure: bool = False
+
+    # Invitations and password resets.
+    invite_ttl_days: int = 7
+    reset_ttl_hours: int = 2
     # NoDecode: the value arrives as a comma-separated string from the environment
     # (e.g. "http://localhost:5173,https://app.tafi.co.ke"); without it
     # pydantic-settings tries to JSON-decode the field before the validator runs.

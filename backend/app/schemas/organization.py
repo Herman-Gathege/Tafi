@@ -6,6 +6,8 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.organization import OrganizationType
+from app.models.user import MembershipRole
+from app.schemas.common import Email
 
 
 class OrganizationCreate(BaseModel):
@@ -25,3 +27,22 @@ class OrganizationRead(BaseModel):
     type: OrganizationType
     created_at: datetime
     updated_at: datetime
+
+
+class InvitationCreate(BaseModel):
+    """Invite someone into an organization."""
+
+    email: Email
+    role: MembershipRole = MembershipRole.SCHOOL_ADMIN
+
+
+class InvitationRead(BaseModel):
+    """An invitation as returned to the platform admin who created it."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    email: str
+    role: MembershipRole
+    expires_at: datetime
+    invite_url: str | None = None

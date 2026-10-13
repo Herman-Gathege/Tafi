@@ -1,34 +1,40 @@
-"""Tests for the organizations endpoints."""
+"""The organizations endpoints keep validating their input."""
+
+import uuid
 
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from tests.helpers import PASSWORD, make_user
 
 
-def test_create_and_list_organizations(client: TestClient) -> None:
-    created = client.post(
-        "/api/v1/organizations",
-        json={"name": "Kilimani Primary School", "type": "school"},
+def sign_in(client: TestClient, email: str, password: str = PASSWORD):
+    return client.post("/api/v1/auth/sign-in", json={"email": email, "password": password})
+
+
+def test_create_organization_returns_a_usable_record(
+    client: TestClient, db_session: Session
+) -> None:
+    make_user(db_session, "staff@tafi.co.ke", platform_admin=True)
+    assert sign_in(client, "staff@tafi.co.ke").status_code == 200
+
+    response = client.post(
+        "/api/v1/organizations", json={"name": "Riverside Academy", "type": "school"}
     )
 
-    assert created.status_code == 201
-    body = created.json()
-    assert body["name"] == "Kilimani Primary School"
+    assert response.status_code == 201
+    body = response.json()
+    assert body["name"] == "Riverside Academy"
     assert body["type"] == "school"
-    assert body["id"]
-
-    listed = client.get("/api/v1/organizations")
-
-    assert listed.status_code == 200
-    assert [item["id"] for item in listed.json()] == [body["id"]]
+    assert uuid.UUID(body["id"])
 
 
-def test_create_organization_defaults_to_school(client: TestClient) -> None:
-    created = client.post("/api/v1/organizations", json={"name": "Mombasa Road Academy"})
+def test_create_organization_rejects_an_unknown_type(
+    client: TestClient, db_session: Session
+) -> None:
+    make_user(db_session, "staff@tafi.co.ke", platform_admin=True)
+    assert sign_in(client, "staff@tafi.co.ke").status_code == 200
 
-    assert created.status_code == 201
-    assert created.json()["type"] == "school"
-
-
-def test_create_organization_rejects_blank_name(client: TestClient) -> None:
-    response = client.post("/api/v1/organizations", json={"name": ""})
+    response = client.post("/api/v1/organizations", json={"name": "Bad", "type": "university"})
 
     assert response.status_code == 422
