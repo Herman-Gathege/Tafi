@@ -1,0 +1,90 @@
+# The production shape of the stack: no bind mounts, built images, TLS at the edge.
+#
+#   DOMAIN=app.tafi.co.ke VITE_API_BASE_URL=https://app.tafi.co.ke \
+#     docker compose -f docker-compose.prod.yml up -d --build
+#
+# Everything runs on one VPS. The database is managed separately (see
+# docs/architecture/deployment.md) and reached through DATABASE_URL.
+
+name: tafi
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+
+  api:
+    build:
+      context: ./backend
+      target: prod
+    restart: unless-stopped
+    env_file:
+      - path: .env.production
+        required: true
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request as u; u.urlopen('http://localhost:8000/health')\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+  worker:
+    build:
+      context: ./backend
+      target: prod
+    restart: unless-stopped
+    env_file:
+      - path: .env.production
+        required: true
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    command: ["celery", "-A", "app.worker.celery_app", "worker", "--beat", "--loglevel=info"]
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./frontend
+      target: prod
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:?set VITE_API_BASE_URL to the public https origin}
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN to the public hostname}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - web
+
+volumes:
+  redis_data:
+  caddy_data:
+  caddy_config:

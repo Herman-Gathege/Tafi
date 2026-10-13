@@ -1,0 +1,19 @@
+# TLS and routing for the production stack. Caddy fetches the certificate
+# automatically once DOMAIN resolves to this server.
+
+{$DOMAIN} {
+	encode gzip
+
+	# The browser talks to the API on the same origin, so no CORS in production.
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+
+	handle /health {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		reverse_proxy web:80
+	}
+}
