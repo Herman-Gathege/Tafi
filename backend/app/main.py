@@ -7,6 +7,8 @@ from app.api.routes.auth import router as auth_router
 from app.api.routes.health import router as health_router
 from app.api.routes.organizations import router as organizations_router
 from app.api.routes.organizations import tenant_router
+from app.api.routes.school_crew import router as school_crew_router
+from app.api.routes.school_transport import router as school_transport_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 
@@ -28,6 +30,8 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     app.include_router(organizations_router)
     app.include_router(tenant_router)
+    app.include_router(school_transport_router)
+    app.include_router(school_crew_router)
     return app
 
 
