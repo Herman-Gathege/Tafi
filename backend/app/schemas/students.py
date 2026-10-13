@@ -46,6 +46,8 @@ class LinkedGuardian(BaseModel):
     whatsapp_number: str
     email: str | None
     status: GuardianStatus
+    # True when the guardian has a current consent: messages can go to them (D-22).
+    has_consent: bool
     relationship: GuardianRelationship
     is_primary: bool
     receives_messages: bool
@@ -204,4 +206,5 @@ class GuardianRead(BaseModel):
     whatsapp_number: str
     email: str | None
     status: GuardianStatus
+    has_consent: bool
     children: list[ChildBrief]

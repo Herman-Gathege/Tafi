@@ -44,6 +44,7 @@ from app.schemas.students import (
     StudentSummary,
     StudentUpdate,
 )
+from app.services.consent import consented_guardian_ids
 
 router = APIRouter(prefix="/api/v1/school", tags=["school"])
 
@@ -75,6 +76,7 @@ def guardians_by_student(
         .where(StudentGuardian.student_id.in_(student_ids))
         .order_by(StudentGuardian.is_primary.desc(), StudentGuardian.created_at)
     ).all()
+    consented = consented_guardian_ids(db, [guardian.id for _, guardian in rows])
     for link, guardian in rows:
         grouped[link.student_id].append(
             LinkedGuardian(
@@ -83,6 +85,7 @@ def guardians_by_student(
                 whatsapp_number=guardian.whatsapp_number,
                 email=guardian.email,
                 status=guardian.status,
+                has_consent=guardian.id in consented,
                 relationship=link.relationship,
                 is_primary=link.is_primary,
                 receives_messages=link.receives_messages,
@@ -570,6 +573,7 @@ def guardian_read(db: Session, guardians: list[Guardian]) -> list[GuardianRead]:
                     id=student.id, first_name=student.first_name, last_name=student.last_name
                 )
             )
+    consented = consented_guardian_ids(db, [guardian.id for guardian in guardians])
     return [
         GuardianRead(
             id=guardian.id,
@@ -577,6 +581,7 @@ def guardian_read(db: Session, guardians: list[Guardian]) -> list[GuardianRead]:
             whatsapp_number=guardian.whatsapp_number,
             email=guardian.email,
             status=guardian.status,
+            has_consent=guardian.id in consented,
             children=children[guardian.id],
         )
         for guardian in guardians

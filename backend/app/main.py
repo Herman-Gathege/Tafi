@@ -4,10 +4,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.auth import router as auth_router
+from app.api.routes.guardian_invites import router as guardian_invites_router
 from app.api.routes.health import router as health_router
 from app.api.routes.organizations import router as organizations_router
 from app.api.routes.organizations import tenant_router
 from app.api.routes.school_crew import router as school_crew_router
+from app.api.routes.school_guardians import router as school_guardians_router
 from app.api.routes.school_students import router as school_students_router
 from app.api.routes.school_transport import router as school_transport_router
 from app.core.config import get_settings
@@ -34,6 +36,8 @@ def create_app() -> FastAPI:
     app.include_router(school_transport_router)
     app.include_router(school_crew_router)
     app.include_router(school_students_router)
+    app.include_router(school_guardians_router)
+    app.include_router(guardian_invites_router)
     return app
 
 
