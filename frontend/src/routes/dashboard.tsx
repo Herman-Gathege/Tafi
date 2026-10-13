@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSession } from "@/lib/session";
 
 const comingUp = [
   { sprint: "Sprint 2", item: "Sign in, invites, roles and organizations" },
@@ -8,13 +9,17 @@ const comingUp = [
 ];
 
 export function DashboardPage() {
+  const { user, school } = useSession();
+
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight">
+          {school ? school.organization_name : "Dashboard"}
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Foundation build. The school portal becomes this screen once the wireframes are approved and Sprint 2
-          adds accounts.
+          Signed in as {user?.name ?? "someone"}. The school screens land in Sprint 3 — this page is what exists
+          today.
         </p>
       </div>
 
@@ -22,7 +27,8 @@ export function DashboardPage() {
         <CardHeader>
           <CardTitle>What lands next</CardTitle>
           <CardDescription>
-            The MVP 1 scope, in the order the team is building it.
+            The MVP 1 scope, in the order the team is building it. Sprint 2 delivered accounts, roles and school
+            onboarding.
           </CardDescription>
         </CardHeader>
         <CardContent>

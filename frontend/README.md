@@ -10,13 +10,20 @@ side** is the school portal, behind a session check.
 |---|---|---|
 | `/` | Public | Landing page |
 | `/wireframes` | Public | The MVP 1 wireframes, with a jump-to-screen list |
-| `/signin` | Public | Placeholder sign-in; real accounts arrive in Sprint 2 |
-| `/app` | Protected | School portal dashboard |
-| `/app/organizations` | Protected | The first working slice: lists and creates organizations through the API |
+| `/signin` | Public | Sign in |
+| `/accept-invite` | Public | Set up the account an invitation was for (needs `?token=`) |
+| `/forgot-password` | Public | Ask for a reset link |
+| `/reset-password` | Public | Choose a new password (needs `?token=`) |
+| `/app` | Protected | School portal — today's placeholder |
+| `/app/admin` | Protected, Tafi staff | Onboard schools and invite their first admin |
 
-Until Sprint 2 lands, the protected side is guarded by a development session in `localStorage`
-(`tafi.devSession`), set by the "Enter the demo" button on `/signin`. `src/components/require-auth.tsx` is the
-only place that checks it, so replacing it with the real session is a one-file change.
+The session is an httpOnly cookie set by the API; the browser cannot read it, so `src/lib/session.ts` asks
+`GET /api/v1/auth/me` and caches the answer with TanStack Query. `src/components/require-auth.tsx` holds both
+guards: `RequireAuth` for anyone signed in, `RequirePlatformAdmin` for Tafi staff.
+
+Two things are deliberately not real yet, and both are called out in the UI: nothing sends email or WhatsApp
+(Sprint 5), so in `local` the API returns reset and invite links in the response and the pages show them; and
+there is no refresh token, so a session simply lasts 12 hours.
 
 ## The wireframes
 
