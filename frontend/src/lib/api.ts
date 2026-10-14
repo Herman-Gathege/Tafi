@@ -608,3 +608,29 @@ export function confirmGuardianInvite(
 ): Promise<{ message: string; school_name: string }> {
   return post(`/api/v1/guardian-invites/${id(token)}/confirm`, payload);
 }
+
+// --- Roster import from a spreadsheet (S3-11) --------------------------------
+
+export interface ImportProblem {
+  row: number;
+  message: string;
+}
+
+export interface RosterImportSummary {
+  rows: number;
+  children_to_add: number;
+  children_skipped: number;
+  guardians_new: number;
+  guardians_existing: number;
+  assigned_to_routes: number;
+  problems: ImportProblem[];
+  imported: boolean;
+}
+
+export function previewRosterImport(csv: string): Promise<RosterImportSummary> {
+  return post<RosterImportSummary>(`${SCHOOL}/students/import/preview`, { csv });
+}
+
+export function runRosterImport(csv: string): Promise<RosterImportSummary> {
+  return post<RosterImportSummary>(`${SCHOOL}/students/import`, { csv });
+}

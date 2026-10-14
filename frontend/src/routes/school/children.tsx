@@ -43,6 +43,7 @@ import {
 } from "@/lib/labels";
 import { schoolKeys, useSchoolMutation } from "@/lib/school-queries";
 import { cn } from "@/lib/utils";
+import { ImportRoster } from "@/routes/school/import-roster";
 
 export function ChildrenPage() {
   const [params, setParams] = useSearchParams();
@@ -54,6 +55,7 @@ export function ChildrenPage() {
     route_id: params.get("route") ?? "",
   });
   const [adding, setAdding] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const students = useQuery({
     queryKey: schoolKeys.students(filters),
@@ -90,11 +92,16 @@ export function ChildrenPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <InvitePending />
+          <Button variant="secondary" onClick={() => setImporting((open) => !open)} aria-expanded={importing}>
+            Import spreadsheet
+          </Button>
           <Button onClick={() => setAdding((open) => !open)} aria-expanded={adding}>
             {adding ? "Close" : "Add child"}
           </Button>
         </div>
       </header>
+
+      {importing ? <ImportRoster onDone={() => setImporting(false)} /> : null}
 
       {adding ? (
         <AddChild
