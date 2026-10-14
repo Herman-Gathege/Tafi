@@ -44,25 +44,26 @@ _Plan and close-out: [`sprint-1.md`](sprint-1.md). "Carried" items are in [`../.
 | T1-14 | Spike: DigitalOcean Managed Database vs container | P1 | Herman | Done |
 | T1-15 | Spike: WhatsApp Cloud API template categories, approval time, cost | P0 | Anne | Carried (H1-2) |
 
-## Sprint 3 — School Operations (14–28 Oct, in progress)
+## Sprint 3 — School Operations (14 Oct, closed)
 
-_Plan: [`sprint-3.md`](sprint-3.md). Owner Anne, reviewer Herman (D-25)._
+_Plan and close-out: [`sprint-3.md`](sprint-3.md). Owner Anne, reviewer Herman (D-25). Carried items are in
+[`../../homework/sprint-3.md`](../../homework/sprint-3.md)._
 
 | ID | Task | Priority | Owner | Status |
 |---|---|---|---|---|
-| S3-01 | Migrations and models (students, guardians, consents, invites, emergency contacts, stop-change requests, routes, stops, vehicles, route runs, assignments, child cards); `conductor` role | P0 | Anne | Not started |
-| S3-02 | Tenancy guard and cross-school tests for every new route | P0 | Anne | Not started |
-| S3-03 | Students API | P0 | Anne | Not started |
-| S3-04 | Guardians API, E.164 validation, emergency contacts | P0 | Anne | Not started |
-| S3-05 | Guardian invite link and public registration page | P0 | Anne | Not started |
-| S3-06 | Consent record, withdrawal and `can_message` check | P0 | Anne | Not started |
-| S3-07 | Routes and ordered stops API | P0 | Anne | Not started |
-| S3-08 | Vehicles, crew invites and route runs (driver required, conductor optional) | P0 | Anne | Not started |
-| S3-09 | Student route assignments with pickup and drop-off stops | P0 | Anne | Not started |
-| S3-10 | School portal screens: Children & guardians; Routes, vehicles & crew; stop-change requests | P0 | Anne | Not started |
-| S3-11 | CSV import with preview and per-row errors | P1 | Anne | Not started |
-| S3-12 | WhatsApp template copy drafted and submitted to Meta | P0 | Anne | Blocked on client (C-04) |
-| S3-13 | Data-model doc; update wireframes and owner-decisions docs | P1 | Anne | Not started |
+| S3-01 | Migrations and models; `conductor` role | P0 | Anne | Done |
+| S3-02 | Tenancy guard and cross-school tests for every new route | P0 | Anne | Done |
+| S3-03 | Students API | P0 | Anne | Done |
+| S3-04 | Guardians API, E.164 validation, emergency contacts | P0 | Anne | Done |
+| S3-05 | Guardian invite link and public registration page | P0 | Anne | Done |
+| S3-06 | Consent record, withdrawal and `can_message` check | P0 | Anne | Done |
+| S3-07 | Routes and ordered stops API | P0 | Anne | Done |
+| S3-08 | Vehicles, crew invites and route runs | P0 | Anne | Done |
+| S3-09 | Student route assignments with pickup and drop-off stops | P0 | Anne | Done |
+| S3-10 | School portal screens and guardian registration page | P0 | Anne | Done — phone check carried (H3-4) |
+| S3-11 | CSV import with preview and per-row errors | P1 | Anne | Done |
+| S3-12 | WhatsApp template copy drafted and submitted to Meta | P0 | Anne | Carried — blocked on the client (C-04, H3-2) |
+| S3-13 | Data-model doc; wireframes and owner-decisions docs; close-out | P1 | Anne | Done |
 
 ## MVP 1
 
@@ -70,12 +71,12 @@ _Plan: [`sprint-3.md`](sprint-3.md). Owner Anne, reviewer Herman (D-25)._
 |---|---|---|---|---|---|
 | MVP-01 | As the Tafi admin, I onboard a school and invite its first admin | P0 | 2 | Foundation | Done |
 | MVP-02 | As a user, I sign in, accept an invite and reset my password | P0 | 2 | MVP-01 | Done |
-| MVP-03 | Roles: platform admin, school admin, driver, conductor (D-21) | P0 | 2, 3 | MVP-02 | Partly done — `conductor` added in Sprint 3 |
-| MVP-04 | As a school admin, I manage students and guardians (several per student, E.164 WhatsApp numbers, emergency contact) | P0 | 3 | MVP-03 | Not started |
-| MVP-05 | As a school admin, I record each guardian's consent to WhatsApp messages; no message is sent without it (D-22) | P0 | 3 | MVP-04 | Not started |
-| MVP-06 | As a school admin, I manage routes and their ordered stops | P0 | 3 | MVP-03 | Not started |
-| MVP-07 | As a school admin, I manage vehicles and crew (driver required, conductor optional) and assign students to stops | P0 | 3 | MVP-04, MVP-06 | Not started |
-| MVP-08 | As a school admin, I import students and guardians from CSV | P1 | 3 | MVP-04 | Not started |
+| MVP-03 | Roles: platform admin, school admin, driver, conductor (D-21) | P0 | 2, 3 | MVP-02 | Done |
+| MVP-04 | As a school admin, I manage students and guardians (several per student, E.164 WhatsApp numbers, emergency contact) | P0 | 3 | MVP-03 | Done |
+| MVP-05 | As a school admin, I record each guardian's consent to WhatsApp messages; no message is sent without it (D-22) | P0 | 3 | MVP-04 | Done — wording awaits the client (D-27) |
+| MVP-06 | As a school admin, I manage routes and their ordered stops | P0 | 3 | MVP-03 | Done |
+| MVP-07 | As a school admin, I manage vehicles and crew (driver required, conductor optional) and assign students to stops | P0 | 3 | MVP-04, MVP-06 | Done |
+| MVP-08 | As a school admin, I import students and guardians from CSV | P1 | 3 | MVP-04 | Done |
 | MVP-09 | As crew, I see today's trips and start/end a trip | P0 | 4 | MVP-07 | Not started |
 | MVP-10 | As crew (driver or conductor), I mark each child boarded, dropped off or absent; a driver alone can only mark while stopped; each event records who and how (D-21, D-24) | P0 | 4 | MVP-09 | Not started |
 | MVP-11 | As crew, my location is shared during an active trip | P0 | 4 | MVP-09, Sprint 1 spike | Not started |
@@ -87,13 +88,14 @@ _Plan: [`sprint-3.md`](sprint-3.md). Owner Anne, reviewer Herman (D-25)._
 | MVP-17 | As the Tafi admin, I edit plans and prices without developers | P1 | 6 | MVP-01 | Not started |
 | MVP-18 | As the Tafi admin, I invoice schools from the configured pricing | P1 | 6 | MVP-17 | Not started |
 | MVP-19 | Every action gives clear feedback; screens work on a phone | P0 | All | — | In progress |
-| MVP-20 | Automated tests and CI for critical paths | P0 | 1 onward | Foundation | In progress — CI and 24 tests in place |
+| MVP-20 | Automated tests and CI for critical paths | P0 | 1 onward | Foundation | In progress — 114 backend tests |
 | MVP-21 | Staging (Sprint 2) and production (Sprint 7) on DigitalOcean with backups | P0 | 2, 7 | Foundation | In progress — staging configuration and runbook written; not deployed |
-| MVP-22 | Privacy checklist: consent wording, data retention, ODPC obligations | P1 | 1, 7 | Client | Not started |
-| MVP-23 | As a guardian, I open an invite link, confirm my details, add a second guardian or emergency contact, give consent and request a stop change (D-22) | P0 | 3 | MVP-04, MVP-05 | Not started |
-| MVP-24 | As a school admin, I approve or decline stop-change requests | P1 | 3 | MVP-23, MVP-07 | Not started |
+| MVP-22 | Privacy checklist: consent wording, data retention, ODPC obligations | P1 | 1, 7 | Client | In progress — draft consent wording in the app (D-27) |
+| MVP-23 | As a guardian, I open an invite link, confirm my details, add a second guardian or emergency contact, give consent and request a stop change (D-22) | P0 | 3 | MVP-04, MVP-05 | Done |
+| MVP-24 | As a school admin, I approve or decline stop-change requests | P1 | 3 | MVP-23, MVP-07 | Done |
 | MVP-25 | As a parent, I sign in to the web dashboard with a one-time code sent to my WhatsApp number (D-20) | P1 | 5 | MVP-12 | Not started |
 | MVP-26 | As a parent, I see my child's status and today's trip, mark them absent and contact the school on the dashboard (D-20) | P1 | 5 | MVP-25, MVP-10 | Not started |
+| MVP-27 | Someone who already has a Tafi account accepts an invite to another school (today it fails with "already has an account") | P2 | After pilot | MVP-02 | Not started |
 
 ## Later
 
