@@ -12,6 +12,8 @@ sprint's planning.
 |---|---|
 | [`sprint-1.md`](sprint-1.md) | Left over from Sprint 1 (closed 9 Oct 2026) |
 | [`sprint-2.md`](sprint-2.md) | Left over from Sprint 2 (closed 13 Oct 2026) |
+| [`sprint-3.md`](sprint-3.md) | Left over from Sprint 3 (closed 14 Oct 2026) |
+| [`sprint-4.md`](sprint-4.md) | Left over from Sprint 4 (built 16 Oct 2026) |
 
 Add one file per sprint, named `sprint-<n>.md`. When an item is done, delete it from the file rather than
 marking it complete — the file is a live list, and git remembers the rest.

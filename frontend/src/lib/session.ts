@@ -25,6 +25,8 @@ export interface SessionState {
   isPlatformAdmin: boolean;
   isLoading: boolean;
   school: Session["memberships"][number] | null;
+  /** The crew membership (driver or conductor) if this person is crew anywhere. */
+  crew: Session["memberships"][number] | null;
 }
 
 export function useSession(): SessionState {
@@ -43,6 +45,10 @@ export function useSession(): SessionState {
     isPlatformAdmin: session?.user.is_platform_admin ?? false,
     isLoading: query.isPending,
     school: session?.memberships[0] ?? null,
+    crew:
+      session?.memberships.find(
+        (membership) => membership.role === "driver" || membership.role === "conductor",
+      ) ?? null,
   };
 }
 
