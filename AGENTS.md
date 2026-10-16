@@ -16,13 +16,16 @@ Discovery → Research → Product decision → UX/UI → Architecture → Imple
 
 ## Current Phase
 
-**Sprint 2 closed 13 Oct 2026; Sprint 3 — School Operations is next.** Anything still open is in
+**Sprint 3 closed 14 Oct 2026; Sprint 4 — Crew Trip App is next** (see
+[`docs/sprints/sprint-4.md`](docs/sprints/sprint-4.md)). Anything still open is in
 [`homework/`](homework/README.md), and the plan is [`docs/sprints/roadmap.md`](docs/sprints/roadmap.md). Therefore:
 
 - do not implement MVP features unless explicitly instructed
 - work to the sprint plan; security hygiene fixes stay allowed (repo visibility, secrets) — see `docs/DECISIONS.md` D-02
 - accounts, roles and tenancy exist: sessions are an httpOnly cookie, and every protected route resolves the
   caller's organization before touching data (see `docs/sprints/sprint-2.md`)
+- the school's data exists too (children, guardians with consent, routes, stops, vehicles, crew, assignments);
+  a crew member is a `driver` or `conductor` membership, guarded by the `Crew` dependency in `backend/app/api/deps.py`
 - the MVP 1 target screens are the wireframes ([`docs/ux/wireframes.md`](docs/ux/wireframes.md)); the app keeps a public
   side anyone can open and a protected side behind a session
 - use documentation to capture decisions
