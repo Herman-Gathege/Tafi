@@ -22,7 +22,14 @@ export function SignInPage() {
       {
         onSuccess: (session) => {
           const from = (location.state as { from?: string } | null)?.from;
-          const home = session.user.is_platform_admin ? "/app/admin" : "/app";
+          const roles = session.memberships.map((membership) => membership.role);
+          const home = session.user.is_platform_admin
+            ? "/app/admin"
+            : roles.includes("school_admin")
+              ? "/app"
+              : roles.includes("driver") || roles.includes("conductor")
+                ? "/crew"
+                : "/app";
           navigate(from ?? home, { replace: true });
         },
       },

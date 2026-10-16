@@ -86,7 +86,16 @@ erDiagram
 
 ## Coming next
 
-- **Sprint 4:** `trips` (a run on a date) and `boarding_events` (who was marked boarded, dropped off or absent,
-  by which crew membership, how — `manual`, later `scan` — and where).
 - **Sprint 5:** an outbox and a notification log for WhatsApp messages; parent sign-in codes.
 - **Sprint 6:** terms, invoices, payments, platform plans and prices.
+
+### Trips (Sprint 4)
+
+| Table | Holds | Rules |
+|---|---|---|
+| `trips` | One run of one route on one day: `route_run_id`, `service_date`, `status` (`scheduled` / `active` / `completed` / `cancelled`), when it started and ended and by which membership | Unique on `(route_run_id, service_date)`. The run supplies the driver, the conductor and the vehicle |
+| `boarding_events` | One child's state change: `kind` (`boarded` / `dropped_off` / `absent`), `recorded_by_membership_id`, `method` (`manual` now, `scan` later), when and where | The API refuses a second boarding, a drop-off without a boarding, an absent after any other state, any event on a finished trip, and any child not on the route that day (D-21, D-24) |
+| `trip_locations` | A position shared while the trip is running: `latitude`, `longitude`, `accuracy_m`, `recorded_at`, and who sent it | Recorded only while the trip is `active`. **A trail is expected to have gaps** — a phone browser stops sending location when the screen locks (T1-11) |
+
+**A driver working alone** must confirm the vehicle is stopped before marking; the API checks how recent that
+confirmation is (D-21, D-32). A conductor marks without it.

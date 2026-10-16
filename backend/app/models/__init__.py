@@ -23,9 +23,20 @@ from app.models.transport import (
     StudentRouteAssignment,
     Vehicle,
 )
+from app.models.trip import (
+    BoardingEvent,
+    BoardingKind,
+    BoardingMethod,
+    Trip,
+    TripLocation,
+    TripStatus,
+)
 from app.models.user import CREW_ROLES, Membership, MembershipRole, User
 
 __all__ = [
+    "BoardingEvent",
+    "BoardingKind",
+    "BoardingMethod",
     "CREW_ROLES",
     "CardStatus",
     "ChildCard",
@@ -52,6 +63,9 @@ __all__ = [
     "StudentGuardian",
     "StudentRouteAssignment",
     "StudentStatus",
+    "Trip",
+    "TripLocation",
+    "TripStatus",
     "User",
     "Vehicle",
 ]

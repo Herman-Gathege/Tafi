@@ -48,6 +48,7 @@ still to be merged into `main` by pull request (PR #4, the Sprint 0 close-out, i
 | Sprint 3 plan + close-out | [`sprints/sprint-3.md`](sprints/sprint-3.md) |
 | Sprint 4 plan (next) | [`sprints/sprint-4.md`](sprints/sprint-4.md) |
 | Sprint 3 delivery (what to open) | [`delivery/sprint-3.md`](delivery/sprint-3.md) |
+| Sprint 4 delivery (what to open) | [`delivery/sprint-4.md`](delivery/sprint-4.md) |
 | Data model (as built) | [`architecture/data-model.md`](architecture/data-model.md) |
 | Sprint 2 delivery (what to open) | [`delivery/sprint-2.md`](delivery/sprint-2.md) |
 | Backlog | [`sprints/backlog.md`](sprints/backlog.md) |

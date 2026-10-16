@@ -77,9 +77,9 @@ _Plan and close-out: [`sprint-3.md`](sprint-3.md). Owner Anne, reviewer Herman (
 | MVP-06 | As a school admin, I manage routes and their ordered stops | P0 | 3 | MVP-03 | Done |
 | MVP-07 | As a school admin, I manage vehicles and crew (driver required, conductor optional) and assign students to stops | P0 | 3 | MVP-04, MVP-06 | Done |
 | MVP-08 | As a school admin, I import students and guardians from CSV | P1 | 3 | MVP-04 | Done |
-| MVP-09 | As crew, I see today's trips and start/end a trip | P0 | 4 | MVP-07 | Not started |
-| MVP-10 | As crew (driver or conductor), I mark each child boarded, dropped off or absent; a driver alone can only mark while stopped; each event records who and how (D-21, D-24) | P0 | 4 | MVP-09 | Not started |
-| MVP-11 | As crew, my location is shared during an active trip | P0 | 4 | MVP-09, Sprint 1 spike | Not started |
+| MVP-09 | As crew, I see today's trips and start/end a trip | P0 | 4 | MVP-07 | Done |
+| MVP-10 | As crew (driver or conductor), I mark each child boarded, dropped off or absent; a driver alone can only mark while stopped; each event records who and how (D-21, D-24) | P0 | 4 | MVP-09 | Done — D-32 |
+| MVP-11 | As crew, my location is shared during an active trip | P0 | 4 | MVP-09, Sprint 1 spike | Done — D-33, with gaps expected (T1-11) |
 | MVP-12 | As a parent, I get WhatsApp messages: trip started, boarded, dropped off | P0 | 5 | MVP-10, MVP-05, S0-07 | Not started |
 | MVP-13 | As a parent, I get a "bus approaching" WhatsApp message | P0 | 5 | MVP-11 | Not started |
 | MVP-14 | As a school admin, I see a log of messages and their delivery status | P0 | 5 | MVP-12 | Not started |

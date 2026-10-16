@@ -1,8 +1,14 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import { AppShell } from "@/components/app-shell";
+import { CrewShell } from "@/components/crew-shell";
 import { PublicShell } from "@/components/public-shell";
-import { RequireAuth, RequirePlatformAdmin, RequireSchoolAdmin } from "@/components/require-auth";
+import {
+  RequireAuth,
+  RequireCrew,
+  RequirePlatformAdmin,
+  RequireSchoolAdmin,
+} from "@/components/require-auth";
 import { AcceptInvitePage } from "@/routes/accept-invite";
 import { AdminPage } from "@/routes/admin";
 import { DashboardPage } from "@/routes/dashboard";
@@ -10,6 +16,8 @@ import { ForgotPasswordPage } from "@/routes/forgot-password";
 import { GuardianInvitePage } from "@/routes/guardian-invite";
 import { LandingPage } from "@/routes/landing";
 import { ResetPasswordPage } from "@/routes/reset-password";
+import { CrewTodayPage } from "@/routes/crew";
+import { CrewTripPage } from "@/routes/crew/trip";
 import { ChildrenPage } from "@/routes/school/children";
 import { StopRequestsPage } from "@/routes/school/requests";
 import { RoutesPage } from "@/routes/school/routes";
@@ -51,6 +59,24 @@ const router = createBrowserRouter([
             path: "admin",
             element: <RequirePlatformAdmin />,
             children: [{ index: true, element: <AdminPage /> }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    path: "/crew",
+    element: <RequireAuth />,
+    children: [
+      {
+        element: <RequireCrew />,
+        children: [
+          {
+            element: <CrewShell />,
+            children: [
+              { index: true, element: <CrewTodayPage /> },
+              { path: "trips/:tripId", element: <CrewTripPage /> },
+            ],
           },
         ],
       },

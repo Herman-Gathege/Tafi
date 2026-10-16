@@ -207,6 +207,104 @@ export function fetchOwnOrganization(): Promise<Organization> {
   return request<Organization>("/api/v1/organization");
 }
 
+// --- The crew app (Sprint 4) --------------------------------------------------
+
+export type TripStatus = "scheduled" | "active" | "completed" | "cancelled";
+export type BoardingKind = "boarded" | "dropped_off" | "absent";
+
+export interface TripSummary {
+  id: string | null;
+  route_run_id: string;
+  route_code: string;
+  route_name: string;
+  direction: "morning" | "afternoon";
+  departure_time: string;
+  vehicle_plate: string | null;
+  status: TripStatus;
+  service_date: string;
+  started_at: string | null;
+  ended_at: string | null;
+  boarded_count: number;
+  dropped_off_count: number;
+  absent_count: number;
+  expected_count: number;
+}
+
+export interface ChildOnTrip {
+  student_id: string;
+  first_name: string;
+  last_name: string;
+  grade: string | null;
+  pickup_stop: string | null;
+  dropoff_stop: string | null;
+  state: "pending" | BoardingKind;
+}
+
+export interface TripDetail {
+  id: string;
+  route_run_id: string;
+  route_code: string;
+  route_name: string;
+  direction: "morning" | "afternoon";
+  departure_time: string;
+  vehicle_plate: string | null;
+  status: TripStatus;
+  service_date: string;
+  started_at: string | null;
+  ended_at: string | null;
+  children: ChildOnTrip[];
+  boarded_count: number;
+  dropped_off_count: number;
+  absent_count: number;
+  location_count: number;
+  last_location_at: string | null;
+  /** What this crew member may do here (D-21). */
+  my_role: "driver" | "conductor";
+  driver_alone: boolean;
+}
+
+export function listTodayTrips(): Promise<TripSummary[]> {
+  return request<TripSummary[]>("/api/v1/crew/trips/today");
+}
+
+export function startTrip(routeRunId: string): Promise<TripDetail> {
+  return post<TripDetail>("/api/v1/crew/trips", { route_run_id: routeRunId });
+}
+
+export function getTrip(tripId: string): Promise<TripDetail> {
+  return request<TripDetail>(`/api/v1/crew/trips/${encodeURIComponent(tripId)}`);
+}
+
+export function endTrip(tripId: string): Promise<TripDetail> {
+  return post<TripDetail>(`/api/v1/crew/trips/${encodeURIComponent(tripId)}/end`);
+}
+
+export function confirmStopped(tripId: string): Promise<{ confirmed_at: string }> {
+  return post<{ confirmed_at: string }>(
+    `/api/v1/crew/trips/${encodeURIComponent(tripId)}/stopped`,
+  );
+}
+
+export function markChild(
+  tripId: string,
+  payload: {
+    student_id: string;
+    kind: BoardingKind;
+    stopped_confirmed_at?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+  },
+): Promise<{ id: string; kind: BoardingKind; method: string; recorded_at: string }> {
+  return post(`/api/v1/crew/trips/${encodeURIComponent(tripId)}/events`, payload);
+}
+
+export function shareLocation(
+  tripId: string,
+  payload: { latitude: number; longitude: number; accuracy_m?: number | null },
+): Promise<{ id: string; recorded_at: string }> {
+  return post(`/api/v1/crew/trips/${encodeURIComponent(tripId)}/locations`, payload);
+}
+
 // --- School data (Sprint 3) --------------------------------------------------
 
 const SCHOOL = "/api/v1/school";

@@ -58,3 +58,19 @@ export function RequireSchoolAdmin() {
   }
   return <Outlet />;
 }
+
+/** Crew only (a driver or a conductor). The API enforces it too. */
+export function RequireCrew() {
+  const { isSignedIn, crew, isLoading } = useSession();
+
+  if (isLoading) {
+    return <Checking />;
+  }
+  if (!isSignedIn) {
+    return <Navigate to="/signin" replace />;
+  }
+  if (!crew) {
+    return <Navigate to="/app" replace />;
+  }
+  return <Outlet />;
+}

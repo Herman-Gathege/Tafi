@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 export function AppShell() {
   const navigate = useNavigate();
   const signOut = useSignOut();
-  const { user, school, isPlatformAdmin } = useSession();
+  const { user, school, isPlatformAdmin, crew } = useSession();
   const isSchoolAdmin = school?.role === "school_admin";
 
   // Shown as a count on the nav item, so requests are not missed.
@@ -22,6 +22,7 @@ export function AppShell() {
 
   const navigation = [
     { to: "/app", label: "Today", end: true, count: 0 },
+    ...(crew ? [{ to: "/crew", label: "My trips", end: false, count: 0 }] : []),
     ...(isSchoolAdmin
       ? [
           { to: "/app/children", label: "Children & guardians", end: false, count: 0 },

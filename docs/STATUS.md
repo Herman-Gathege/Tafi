@@ -2,10 +2,11 @@
 
 _Last updated: 14 Oct 2026_
 
-**Phase:** Sprint 3 closed (14 Oct 2026, D-31). **Sprint 4 — Crew Trip App is next**, and can start early.
+**Phase:** Sprint 4 — Crew Trip App built and verified (16 Oct 2026). **Sprint 5 — Parent WhatsApp + Dashboard is
+next.** A real-phone check and the pull requests are outstanding.
 
-**Current objective:** Plan Sprint 4, get the client moving on Meta verification, staging and the consent wording,
-and get Sprints 1–3 reviewed and merged.
+**Current objective:** Walk the crew app on a real phone, get Sprints 1–4 reviewed and merged, and get the client
+moving on Meta verification, staging and the consent wording.
 
 ## Where the product is
 
@@ -49,7 +50,8 @@ accounts walkthrough is [`delivery/sprint-2.md`](delivery/sprint-2.md)).
 | Routes & crew | `/app/routes`: routes, ordered stops, morning and afternoon runs, vehicles, crew invites |
 | Stop requests | `/app/requests`: approve or decline guardians' stop changes |
 | Guardian registration | `/guardian-invite?token=…`: confirm details, consent, second guardian, emergency contact, stop request |
-| `backend/` | FastAPI, three Alembic migrations, Celery worker; ruff, mypy and **114 tests** pass |
+| Crew trip app | `/crew`: today's trips, start/end, boarded / dropped off / absent with who and how, the driver-alone stopped rule (D-32), and location sharing (D-33) |
+| `backend/` | FastAPI, four Alembic migrations, Celery worker; ruff, mypy and **126 tests** pass |
 | `frontend/` | React + Vite + Tailwind; ESLint and TypeScript pass |
 | Local stack | `docker compose up` runs api + db + redis + worker + web |
 | CI | GitHub Actions on backend and frontend |
