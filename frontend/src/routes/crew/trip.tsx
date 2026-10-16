@@ -126,7 +126,7 @@ export function CrewTripPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           {done
             ? `Trip finished. ${data.boarded_count} boarded, ${data.dropped_off_count} dropped off, ${data.absent_count} absent.`
-            : `${data.boarded_count} of ${data.children.length} on board · ${data.location_count} location updates`}
+            : `${data.boarded_count} of ${data.children.length} on board · ${plural(data.location_count, "location update")}`}
         </p>
       </div>
 
@@ -189,7 +189,7 @@ export function CrewTripPage() {
             </Button>
             {locationNote ? <p className="text-xs text-muted-foreground">{locationNote}</p> : null}
             <p className="text-xs text-muted-foreground">
-              {data.location_count} updates sent
+              {plural(data.location_count, "update")} sent
               {data.last_location_at ? ` · last at ${new Date(data.last_location_at).toLocaleTimeString()}` : ""}
             </p>
           </CardContent>
@@ -262,6 +262,10 @@ function ChildRow({
 }
 
 /** True while a timestamp is younger than `seconds` — the UI's copy of the server's window. */
+function plural(count: number, word: string): string {
+  return `${count} ${word}${count === 1 ? "" : "s"}`;
+}
+
 function useRecent(timestamp: string | null, seconds: number): boolean {
   const [fresh, setFresh] = useState(false);
   useEffect(() => {
