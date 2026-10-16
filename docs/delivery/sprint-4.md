@@ -51,7 +51,8 @@ the API; location is stored against the trip; another school's crew cannot reach
 - **Location has gaps.** A phone browser stops sending when the screen locks, so a trail is incomplete by design
   (T1-11, D-33). Nothing downstream may treat it as continuous.
 - **The stopped confirmation is a human acknowledgement**, not a motion sensor (D-32).
-- **Not checked on a real phone yet**, and nothing is deployed.
+- **Checked at a phone viewport (390 × 844), not yet on a real device.** Both crew screens fit and are tap-sized;
+  permission prompts and the stopped confirmation still need a real phone. Nothing is deployed.
 - Card scanning (D-24), live trip view for the school (MVP-15) and billing are later sprints.
 
 ## 5. How it was built
