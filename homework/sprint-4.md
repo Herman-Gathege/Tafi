@@ -8,12 +8,14 @@
 
 ### H4-1 — Walk the crew app on a real phone (S4-10)
 
-- **Left over:** the crew screens were verified in a desktop browser. This app is phone-only in practice, and the
-  Sprint 3 phone check (H3-4) is still owed too.
-- **Why it matters:** marking children one-handed, on a phone, is the whole job; the stopped-confirmation and the
-  location permission are both phone behaviours.
+- **Partly done (16 Oct):** both crew screens were rendered at a phone viewport (390 × 844) against the running
+  stack, on a fresh trip with one child boarded and one location sent. Everything fits: the header collapses, the
+  cards and buttons are full width, the "Are you stopped?" gate is prominent, and each child's three buttons are
+  tap-sized. No overflow or clipping. A wording bug this surfaced ("1 updates sent") was fixed.
+- **Still owed:** the same check on a **real device** — the stopped confirmation and the location permission are
+  behaviours a headless browser cannot exercise. The Sprint 3 phone check (H3-4) is still owed too.
 - **Next action:** open `http://<laptop-ip>:<WEB_PORT>/crew` on an Android phone on the same network, run a trip,
-  and fix anything too small to tap or that overflows.
+  grant location, and confirm the mark buttons are comfortable one-handed.
 - **Tracked:** S4-10, MVP-19.
 
 ### H4-2 — Confirm the two decisions taken during the build
