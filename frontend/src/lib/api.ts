@@ -1,7 +1,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 export type OrganizationType = "school" | "operator";
-export type MembershipRole = "school_admin" | "driver" | "conductor";
+export type MembershipRole = "school_admin" | "driver" | "conductor" | "parent";
 
 export interface Organization {
   id: string;
@@ -145,6 +145,16 @@ export function signIn(email: string, password: string): Promise<Session> {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });
+}
+
+/** A school creates itself and its first admin. */
+export function signUp(payload: {
+  school_name: string;
+  name: string;
+  email: string;
+  password: string;
+}): Promise<Session> {
+  return post<Session>("/api/v1/auth/signup", payload);
 }
 
 export function signOut(): Promise<void> {
@@ -303,6 +313,41 @@ export function shareLocation(
   payload: { latitude: number; longitude: number; accuracy_m?: number | null },
 ): Promise<{ id: string; recorded_at: string }> {
   return post(`/api/v1/crew/trips/${encodeURIComponent(tripId)}/locations`, payload);
+}
+
+// --- A parent's own family (Sprint 4.5) --------------------------------------
+
+export interface ParentChild {
+  student_id: string;
+  first_name: string;
+  last_name: string;
+  grade: string | null;
+  route_code: string | null;
+  route_name: string | null;
+  pickup_stop: string | null;
+  dropoff_stop: string | null;
+}
+
+export interface ParentStopRequest {
+  id: string;
+  student_id: string;
+  status: string;
+  requested_at: string | null;
+}
+
+export interface ParentMe {
+  guardian_id: string;
+  full_name: string;
+  whatsapp_number: string;
+  status: string;
+  has_consent: boolean;
+  school_name: string;
+  children: ParentChild[];
+  stop_requests: ParentStopRequest[];
+}
+
+export function fetchParentMe(): Promise<ParentMe> {
+  return request<ParentMe>("/api/v1/parent/me");
 }
 
 // --- School data (Sprint 3) --------------------------------------------------

@@ -29,7 +29,9 @@ export function SignInPage() {
               ? "/app"
               : roles.includes("driver") || roles.includes("conductor")
                 ? "/crew"
-                : "/app";
+                : roles.includes("parent")
+                  ? "/parent"
+                  : "/app";
           navigate(from ?? home, { replace: true });
         },
       },
@@ -80,6 +82,12 @@ export function SignInPage() {
             <Link to="/forgot-password" className="text-sm text-muted-foreground underline">
               Forgot your password?
             </Link>
+            <p className="text-sm text-muted-foreground">
+              New to Tafi?{" "}
+              <Link to="/signup" className="underline">
+                Create your school's account
+              </Link>
+            </p>
           </form>
         </CardContent>
       </Card>

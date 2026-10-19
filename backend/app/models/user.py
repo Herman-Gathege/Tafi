@@ -24,6 +24,10 @@ class MembershipRole(enum.StrEnum):
     DRIVER = "driver"
     # D-21: optional second crew member; marks children on and off the bus.
     CONDUCTOR = "conductor"
+    # A guardian who can sign in to see their own children. Guardians existed before
+    # as records with invite links; this role gives one a login (it needs no migration,
+    # roles are stored as text).
+    PARENT = "parent"
 
 
 CREW_ROLES = frozenset({MembershipRole.DRIVER, MembershipRole.CONDUCTOR})

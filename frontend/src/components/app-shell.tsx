@@ -1,18 +1,42 @@
 import { useQuery } from "@tanstack/react-query";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Bus, Inbox, LayoutDashboard, LogOut, Route as RouteIcon, Shield, Users } from "lucide-react";
+import { Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { listStopChangeRequests } from "@/lib/api";
 import { schoolKeys } from "@/lib/school-queries";
 import { useSession, useSignOut } from "@/lib/session";
-import { cn } from "@/lib/utils";
+
+interface NavItem {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  end?: boolean;
+  count?: number;
+}
 
 export function AppShell() {
   const navigate = useNavigate();
+  const location = useLocation();
   const signOut = useSignOut();
-  const { user, school, isPlatformAdmin, crew } = useSession();
+  const { user, school, isPlatformAdmin, crew, isParent } = useSession();
   const isSchoolAdmin = school?.role === "school_admin";
 
-  // Shown as a count on the nav item, so requests are not missed.
   const pendingRequests = useQuery({
     queryKey: schoolKeys.stopRequests,
     queryFn: () => listStopChangeRequests("pending"),
@@ -20,96 +44,90 @@ export function AppShell() {
   });
   const pendingCount = pendingRequests.data?.length ?? 0;
 
-  const navigation = [
-    { to: "/app", label: "Today", end: true, count: 0 },
-    ...(crew ? [{ to: "/crew", label: "My trips", end: false, count: 0 }] : []),
-    ...(isSchoolAdmin
-      ? [
-          { to: "/app/children", label: "Children & guardians", end: false, count: 0 },
-          { to: "/app/routes", label: "Routes & crew", end: false, count: 0 },
-          { to: "/app/requests", label: "Stop requests", end: false, count: pendingCount },
-        ]
-      : []),
-    ...(isPlatformAdmin ? [{ to: "/app/admin", label: "Platform admin", end: false, count: 0 }] : []),
-  ];
-
-  function onSignOut() {
-    signOut.mutate(undefined, { onSettled: () => navigate("/", { replace: true }) });
+  // A parent's home is their family, not the school's operations.
+  if (isParent && !isSchoolAdmin && !isPlatformAdmin && !crew) {
+    return <Navigate to="/parent" replace />;
   }
 
-  return (
-    <div className="flex min-h-dvh flex-col bg-background text-foreground">
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:text-primary-foreground"
-      >
-        Skip to content
-      </a>
+  const items: NavItem[] = [
+    { to: "/app", label: "Today", icon: LayoutDashboard, end: true },
+    ...(crew ? [{ to: "/crew", label: "My trips", icon: Bus }] : []),
+    ...(isSchoolAdmin
+      ? [
+          { to: "/app/children", label: "Children & guardians", icon: Users },
+          { to: "/app/routes", label: "Routes & crew", icon: RouteIcon },
+          { to: "/app/requests", label: "Stop requests", icon: Inbox, count: pendingCount },
+        ]
+      : []),
+    ...(isPlatformAdmin ? [{ to: "/app/admin", label: "Platform admin", icon: Shield }] : []),
+  ];
 
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
-          <NavLink to="/app" className="font-display text-lg font-bold tracking-tight">
-            Tafi
-            <span className="ml-2 text-xs font-medium text-muted-foreground">
-              {school ? school.organization_name : "school portal"}
+  const isActive = (item: NavItem) =>
+    item.end ? location.pathname === item.to : location.pathname.startsWith(item.to);
+
+  return (
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader>
+          <div className="flex items-center gap-2 px-2 py-1">
+            <span className="font-display text-lg font-bold tracking-tight">Tafi</span>
+            <span className="truncate text-xs text-muted-foreground">
+              {school?.organization_name ?? "school portal"}
             </span>
-          </NavLink>
-          <div className="flex flex-wrap items-center gap-2">
-            <nav aria-label="Main" className="max-w-full overflow-x-auto">
-              <ul className="flex items-center gap-1">
-                {navigation.map((item) => (
-                  <li key={item.to}>
-                    <NavLink
-                      to={item.to}
-                      end={item.end}
-                      className={({ isActive }) =>
-                        cn(
-                          "inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-medium whitespace-nowrap transition",
-                          isActive
-                            ? "bg-primary text-primary-foreground"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                        )
-                      }
-                    >
-                      {item.label}
-                      {item.count > 0 ? (
-                        <span className="rounded-full bg-foreground px-1.5 text-xs text-background">
-                          {item.count}
-                          <span className="sr-only"> waiting</span>
-                        </span>
-                      ) : null}
-                    </NavLink>
-                  </li>
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>School</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {items.map((item) => (
+                  <SidebarMenuItem key={item.to}>
+                    <SidebarMenuButton asChild isActive={isActive(item)}>
+                      <NavLink to={item.to} end={item.end}>
+                        <item.icon />
+                        <span>{item.label}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                    {item.count ? <SidebarMenuBadge>{item.count}</SidebarMenuBadge> : null}
+                  </SidebarMenuItem>
                 ))}
-              </ul>
-            </nav>
-            <span className="hidden text-sm text-muted-foreground sm:inline">{user?.name ?? ""}</span>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter>
+          <div className="flex flex-col gap-2 px-2 py-1">
+            <p className="truncate text-sm font-medium">{user?.name ?? ""}</p>
             <button
               type="button"
-              onClick={onSignOut}
-              disabled={signOut.isPending}
-              className="inline-flex h-9 items-center rounded-md px-3 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              onClick={() =>
+                signOut.mutate(undefined, { onSettled: () => navigate("/", { replace: true }) })
+              }
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
             >
-              {signOut.isPending ? "Signing out…" : "Sign out"}
+              <LogOut className="size-4" />
+              Sign out
             </button>
           </div>
-        </div>
-      </header>
+        </SidebarFooter>
+      </Sidebar>
 
-      <p
-        role="status"
-        className="border-b border-border bg-brand-soft px-4 py-2 text-center text-xs text-foreground"
-      >
-        Development build — WhatsApp delivery arrives in Sprint 5, so invite links are shown on screen.
-      </p>
-
-      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
-        <Outlet />
-      </main>
-
-      <footer className="border-t border-border px-4 py-4 text-center text-xs text-muted-foreground">
-        Tafi — MVP 1 in development. Nairobi, Kenya.
-      </footer>
-    </div>
+      <SidebarInset>
+        <header className="flex h-14 items-center gap-3 border-b border-border px-3">
+          <SidebarTrigger />
+          <span className="font-medium">{school?.organization_name ?? "Tafi"}</span>
+        </header>
+        <p
+          role="status"
+          className="border-b border-border bg-brand-soft px-4 py-2 text-center text-xs"
+        >
+          Development build — WhatsApp delivery arrives in Sprint 5.
+        </p>
+        <main id="main" className="flex-1 p-4 sm:p-6">
+          <Outlet />
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
