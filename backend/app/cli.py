@@ -2,13 +2,42 @@
 
 import argparse
 from collections.abc import Sequence
+from datetime import date, time
 
 from sqlalchemy import select
 
 from app.core.security import hash_password
 from app.db.session import SessionLocal
-from app.models.user import User
+from app.models.guardian import (
+    ConsentMethod,
+    Guardian,
+    GuardianRelationship,
+    GuardianStatus,
+    StudentGuardian,
+)
+from app.models.organization import Organization, OrganizationType
+from app.models.student import Student, StudentStatus
+from app.models.transport import (
+    Route,
+    RouteRun,
+    RunDirection,
+    Stop,
+    StudentRouteAssignment,
+    Vehicle,
+)
+from app.models.user import Membership, MembershipRole, User
 from app.schemas.common import normalise_email
+from app.services.consent import record_consent
+
+DEMO_PASSWORD = "TafiDemo2026!"
+DEMO_SCHOOL = "Riverside Academy (demo)"
+DEMO_ACCOUNTS = [
+    ("demo.platform@tafi.test", "Demo Platform Admin", "platform admin"),
+    ("demo.admin@tafi.test", "Demo School Admin", "school admin"),
+    ("demo.driver@tafi.test", "Demo Driver", "driver"),
+    ("demo.conductor@tafi.test", "Demo Conductor", "conductor"),
+    ("demo.parent@tafi.test", "Demo Parent", "parent"),
+]
 
 
 def create_platform_admin(email: str, password: str, name: str | None = None) -> str:
@@ -39,6 +68,192 @@ def create_platform_admin(email: str, password: str, name: str | None = None) ->
         return f"Platform admin {action}: {address}"
 
 
+def _demo_user(db, email: str, name: str, *, platform: bool = False) -> User:
+    """One account per role, with a known development password."""
+    user = db.scalar(select(User).where(User.email == email))
+    if user is None:
+        user = User(
+            email=email,
+            name=name,
+            password_hash=hash_password(DEMO_PASSWORD),
+            is_platform_admin=platform,
+        )
+        db.add(user)
+        db.flush()
+        return user
+    user.name = name
+    user.password_hash = hash_password(DEMO_PASSWORD)
+    user.is_active = True
+    user.is_platform_admin = platform or user.is_platform_admin
+    return user
+
+
+def _demo_membership(db, user: User, org: Organization, role: MembershipRole) -> Membership:
+    membership = db.scalar(
+        select(Membership).where(
+            Membership.user_id == user.id, Membership.organization_id == org.id
+        )
+    )
+    if membership is None:
+        membership = Membership(user_id=user.id, organization_id=org.id, role=role)
+        db.add(membership)
+        db.flush()
+    else:
+        membership.role = role
+    return membership
+
+
+def seed_demo() -> list[str]:
+    """Create a demo school with one account per role. Safe to run repeatedly."""
+    lines: list[str] = []
+    with SessionLocal() as db:
+        org = db.scalar(select(Organization).where(Organization.name == DEMO_SCHOOL))
+        if org is None:
+            org = Organization(name=DEMO_SCHOOL, type=OrganizationType.SCHOOL)
+            db.add(org)
+            db.flush()
+
+        _demo_user(db, "demo.platform@tafi.test", "Demo Platform Admin", platform=True)
+        admin = _demo_user(db, "demo.admin@tafi.test", "Demo School Admin")
+        driver = _demo_user(db, "demo.driver@tafi.test", "Demo Driver")
+        conductor = _demo_user(db, "demo.conductor@tafi.test", "Demo Conductor")
+        parent = _demo_user(db, "demo.parent@tafi.test", "Demo Parent")
+
+        _demo_membership(db, admin, org, MembershipRole.SCHOOL_ADMIN)
+        driver_membership = _demo_membership(db, driver, org, MembershipRole.DRIVER)
+        conductor_membership = _demo_membership(db, conductor, org, MembershipRole.CONDUCTOR)
+        _demo_membership(db, parent, org, MembershipRole.PARENT)
+
+        guardian = db.scalar(
+            select(Guardian).where(
+                Guardian.organization_id == org.id, Guardian.whatsapp_number == "+254700000001"
+            )
+        )
+        if guardian is None:
+            guardian = Guardian(
+                organization_id=org.id,
+                full_name="Demo Parent",
+                whatsapp_number="+254700000001",
+                email="demo.parent@tafi.test",
+                status=GuardianStatus.CONFIRMED,
+            )
+            db.add(guardian)
+            db.flush()
+        guardian.user_id = parent.id
+        record_consent(db, guardian, method=ConsentMethod.SCHOOL_RECORDED)
+
+        route = db.scalar(select(Route).where(Route.organization_id == org.id, Route.code == "R1"))
+        if route is None:
+            route = Route(organization_id=org.id, code="R1", name="Kileleshwa")
+            db.add(route)
+            db.flush()
+
+        stops: list[Stop] = []
+        for sequence, name in enumerate(["Main gate", "Shops", "Church"], start=1):
+            stop = db.scalar(select(Stop).where(Stop.route_id == route.id, Stop.name == name))
+            if stop is None:
+                stop = Stop(organization_id=org.id, route_id=route.id, name=name, sequence=sequence)
+                db.add(stop)
+                db.flush()
+            stops.append(stop)
+
+        vehicle = db.scalar(
+            select(Vehicle).where(Vehicle.organization_id == org.id, Vehicle.plate == "KDA 213A")
+        )
+        if vehicle is None:
+            vehicle = Vehicle(organization_id=org.id, plate="KDA 213A", seats=26)
+            db.add(vehicle)
+            db.flush()
+
+        run = db.scalar(
+            select(RouteRun).where(
+                RouteRun.route_id == route.id, RouteRun.direction == RunDirection.MORNING
+            )
+        )
+        if run is None:
+            run = RouteRun(
+                organization_id=org.id,
+                route_id=route.id,
+                direction=RunDirection.MORNING,
+                departure_time=time(6, 30),
+                vehicle_id=vehicle.id,
+                driver_membership_id=driver_membership.id,
+                conductor_membership_id=conductor_membership.id,
+            )
+            db.add(run)
+            db.flush()
+        else:
+            run.vehicle_id = vehicle.id
+            run.driver_membership_id = driver_membership.id
+            run.conductor_membership_id = conductor_membership.id
+
+        for first, last, grade in [
+            ("Wanjiru", "Otieno", "Grade 4"),
+            ("Kamau", "Otieno", "Grade 1"),
+        ]:
+            student = db.scalar(
+                select(Student).where(
+                    Student.organization_id == org.id,
+                    Student.first_name == first,
+                    Student.last_name == last,
+                )
+            )
+            if student is None:
+                student = Student(
+                    organization_id=org.id,
+                    first_name=first,
+                    last_name=last,
+                    grade=grade,
+                    status=StudentStatus.ACTIVE,
+                )
+                db.add(student)
+                db.flush()
+            link = db.scalar(
+                select(StudentGuardian).where(
+                    StudentGuardian.student_id == student.id,
+                    StudentGuardian.guardian_id == guardian.id,
+                )
+            )
+            if link is None:
+                db.add(
+                    StudentGuardian(
+                        organization_id=org.id,
+                        student_id=student.id,
+                        guardian_id=guardian.id,
+                        relationship=GuardianRelationship.MOTHER,
+                        is_primary=True,
+                    )
+                )
+            assignment = db.scalar(
+                select(StudentRouteAssignment).where(
+                    StudentRouteAssignment.student_id == student.id,
+                    StudentRouteAssignment.active_to.is_(None),
+                )
+            )
+            if assignment is None:
+                db.add(
+                    StudentRouteAssignment(
+                        organization_id=org.id,
+                        student_id=student.id,
+                        route_id=route.id,
+                        pickup_stop_id=stops[0].id,
+                        dropoff_stop_id=stops[2].id,
+                        active_from=date.today(),
+                    )
+                )
+
+        db.commit()
+
+    lines.append(f"Demo school: {DEMO_SCHOOL}")
+    lines.append("")
+    lines.append(f"{'role':<16}{'email':<28}password")
+    for email, _name, role in DEMO_ACCOUNTS:
+        lines.append(f"{role:<16}{email:<28}{DEMO_PASSWORD}")
+    lines.append("")
+    lines.append("Development only — never use these accounts outside local.")
+    return lines
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="app.cli", description="Tafi operations")
     subcommands = parser.add_subparsers(dest="command", required=True)
@@ -49,6 +264,8 @@ def build_parser() -> argparse.ArgumentParser:
     admin.add_argument("--email", required=True)
     admin.add_argument("--password", required=True)
     admin.add_argument("--name", default=None)
+
+    subcommands.add_parser("seed-demo", help="create one demo account per role")
     return parser
 
 
@@ -56,6 +273,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "create-platform-admin":
         print(create_platform_admin(args.email, args.password, args.name))
+    elif args.command == "seed-demo":
+        for line in seed_demo():
+            print(line)
     return 0
 
 

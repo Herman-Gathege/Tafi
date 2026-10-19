@@ -44,6 +44,9 @@ export function LandingPage() {
             <Link to="/signin" className={buttonStyles({ variant: "secondary" })}>
               School sign in
             </Link>
+            <Link to="/signup" className={buttonStyles({ variant: "ghost" })}>
+              Create an account
+            </Link>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">
             Tafi is being built now. The wireframes show the screens the pilot school will use.
