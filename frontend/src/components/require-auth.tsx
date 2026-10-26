@@ -74,19 +74,3 @@ export function RequireCrew() {
   }
   return <Outlet />;
 }
-
-/** A guardian with a login. The API enforces it too. */
-export function RequireParent() {
-  const { isSignedIn, isParent, isLoading } = useSession();
-
-  if (isLoading) {
-    return <Checking />;
-  }
-  if (!isSignedIn) {
-    return <Navigate to="/signin" replace />;
-  }
-  if (!isParent) {
-    return <Navigate to="/app" replace />;
-  }
-  return <Outlet />;
-}

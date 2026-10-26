@@ -19,13 +19,14 @@ import { cn } from "@/lib/utils";
 /**
  * Wireframes 6 and 7: marking children on a trip, and the summary when it ends.
  *
- * A driver working alone must confirm the vehicle is stopped before marking (D-21). The
- * server checks how recent that confirmation is; this screen just collects it.
+ * A driver working alone presses "I am stopped" before marking (D-21, D-32). The server
+ * records that press and checks it on every mark; this screen only shows whether it is
+ * still fresh, so the button state matches what the server will accept.
  */
 export function CrewTripPage() {
   const { tripId } = useParams<{ tripId: string }>();
   const queryClient = useQueryClient();
-  const [stoppedAt, setStoppedAt] = useState<string | null>(null);
+  const [confirmedAt, setConfirmedAt] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [locationNote, setLocationNote] = useState<string | null>(null);
   const lastSent = useRef(0);
@@ -43,12 +44,13 @@ export function CrewTripPage() {
 
   const confirm = useMutation({
     mutationFn: () => confirmStopped(tripId as string),
-    onSuccess: (result) => setStoppedAt(result.confirmed_at),
+    onSuccess: (result) => setConfirmedAt(result.confirmed_at),
+    onSettled: refresh,
   });
 
   const mark = useMutation({
     mutationFn: (payload: { student_id: string; kind: BoardingKind }) =>
-      markChild(tripId as string, { ...payload, stopped_confirmed_at: stoppedAt }),
+      markChild(tripId as string, payload),
     onSettled: refresh,
   });
 
@@ -57,9 +59,14 @@ export function CrewTripPage() {
     onSettled: refresh,
   });
 
-  const needsConfirmation =
-    trip.data?.status === "active" && trip.data.driver_alone && trip.data.my_role === "driver";
-  const confirmationIsFresh = useRecent(stoppedAt, 110);
+  const needsConfirmation = trip.data?.status === "active" && trip.data.must_confirm_stopped;
+  // The server's record, or the press just made on this screen. A few seconds short of the
+  // server's window, so the buttons lock before the server would refuse.
+  const lastConfirmation = confirmedAt ?? trip.data?.stopped_confirmed_at ?? null;
+  const confirmationIsFresh = useRecent(
+    lastConfirmation,
+    (trip.data?.stopped_window_seconds ?? 120) - 10,
+  );
   const canMark = trip.data?.status === "active" && (!needsConfirmation || confirmationIsFresh);
 
   // Location: a phone browser cannot keep sending this with the screen locked (T1-11),
@@ -98,19 +105,26 @@ export function CrewTripPage() {
   }, [sharing, tripId]);
 
   if (trip.isPending) {
-    return <div className="p-6"><Loading label="Loading the trip…" /></div>;
+    return (
+      <div className="p-6">
+        <Loading label="Loading the trip…" />
+      </div>
+    );
   }
   if (trip.isError || !trip.data) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-10">
         <ErrorText error={trip.error} fallback="Could not load this trip." />
-        <Link to="/crew" className="text-sm underline">Back to today's trips</Link>
+        <Link to="/crew" className="text-sm underline">
+          Back to today's trips
+        </Link>
       </div>
     );
   }
 
   const data = trip.data;
   const done = data.status === "completed";
+  const stopLabel = data.direction === "morning" ? "Pickup" : "Drop-off";
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 px-4 py-6">
@@ -136,7 +150,7 @@ export function CrewTripPage() {
             <CardTitle>{confirmationIsFresh ? "Marks are unlocked" : "Are you stopped?"}</CardTitle>
             <CardDescription>
               {confirmationIsFresh
-                ? "You confirmed a moment ago. Confirm again once you move on."
+                ? "You confirmed a moment ago. Press again at the next stop."
                 : "You are driving alone, so children can only be marked while the vehicle is stopped."}
             </CardDescription>
           </CardHeader>
@@ -156,17 +170,20 @@ export function CrewTripPage() {
         <CardHeader>
           <CardTitle>Children</CardTitle>
           <CardDescription>
-            {done ? "What was recorded on this trip." : "Tap each child as they get on or off."}
+            {done
+              ? "What was recorded on this trip."
+              : "In the order you reach their stops. Tap each child as they get on or off."}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col divide-y divide-border">
           {data.children.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No children are on this route today.</p>
+            <p className="text-sm text-muted-foreground">No children ride this run today.</p>
           ) : null}
           {data.children.map((child) => (
             <ChildRow
               key={child.student_id}
               child={child}
+              stopLabel={stopLabel}
               disabled={!canMark || mark.isPending}
               onMark={(kind) => mark.mutate({ student_id: child.student_id, kind })}
             />
@@ -190,7 +207,9 @@ export function CrewTripPage() {
             {locationNote ? <p className="text-xs text-muted-foreground">{locationNote}</p> : null}
             <p className="text-xs text-muted-foreground">
               {plural(data.location_count, "update")} sent
-              {data.last_location_at ? ` · last at ${new Date(data.last_location_at).toLocaleTimeString()}` : ""}
+              {data.last_location_at
+                ? ` · last at ${new Date(data.last_location_at).toLocaleTimeString()}`
+                : ""}
             </p>
           </CardContent>
         </Card>
@@ -211,10 +230,12 @@ export function CrewTripPage() {
 
 function ChildRow({
   child,
+  stopLabel,
   disabled,
   onMark,
 }: {
   child: ChildOnTrip;
+  stopLabel: string;
   disabled: boolean;
   onMark: (kind: BoardingKind) => void;
 }) {
@@ -226,8 +247,8 @@ function ChildRow({
           {child.first_name} {child.last_name}
         </p>
         <p className="text-xs text-muted-foreground">
-          {child.grade ? `${child.grade} · ` : ""}
-          {child.pickup_stop ?? "no stop"}
+          {stopLabel}: {child.stop}
+          {child.grade ? ` · ${child.grade}` : ""}
           {state === "pending" ? "" : ` · ${state.replace("_", " ")}`}
         </p>
       </div>
@@ -261,11 +282,11 @@ function ChildRow({
   );
 }
 
-/** True while a timestamp is younger than `seconds` — the UI's copy of the server's window. */
 function plural(count: number, word: string): string {
   return `${count} ${word}${count === 1 ? "" : "s"}`;
 }
 
+/** True while a timestamp is younger than `seconds`. */
 function useRecent(timestamp: string | null, seconds: number): boolean {
   const [fresh, setFresh] = useState(false);
   useEffect(() => {

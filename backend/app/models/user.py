@@ -5,7 +5,17 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, UniqueConstraint, Uuid, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
+    String,
+    UniqueConstraint,
+    Uuid,
+    func,
+    true,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -17,17 +27,14 @@ if TYPE_CHECKING:
 class MembershipRole(enum.StrEnum):
     """What someone may do inside one organization.
 
-    Stored as plain text (VARCHAR 32), so adding a role needs no migration.
+    Stored as plain text (VARCHAR 32), so adding a role needs no migration. Parents sign in
+    with a one-time WhatsApp code in Sprint 5 (D-20), not through a membership role.
     """
 
     SCHOOL_ADMIN = "school_admin"
     DRIVER = "driver"
     # D-21: optional second crew member; marks children on and off the bus.
     CONDUCTOR = "conductor"
-    # A guardian who can sign in to see their own children. Guardians existed before
-    # as records with invite links; this role gives one a login (it needs no migration,
-    # roles are stored as text).
-    PARENT = "parent"
 
 
 CREW_ROLES = frozenset({MembershipRole.DRIVER, MembershipRole.CONDUCTOR})
@@ -57,7 +64,12 @@ class User(Base):
 
 
 class Membership(Base):
-    """A user's role inside one organization — the tenant boundary."""
+    """A user's role inside one organization — the tenant boundary.
+
+    A membership is deactivated, never deleted, once its holder may have done work for the
+    school: trips, boarding events and locations point at it (D-34). An inactive membership
+    grants nothing; `memberships_for` ignores it.
+    """
 
     __tablename__ = "memberships"
     __table_args__ = (
@@ -79,6 +91,9 @@ class Membership(Base):
             values_callable=lambda enum_cls: [member.value for member in enum_cls],
         ),
         nullable=False,
+    )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default=true(), nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

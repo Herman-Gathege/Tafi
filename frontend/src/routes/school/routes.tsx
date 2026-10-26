@@ -468,6 +468,7 @@ function CrewCard() {
         <CardTitle>Crew</CardTitle>
         <CardDescription>
           Drivers and conductors sign in to the crew app. A vehicle can run with a driver alone.
+          Removing someone keeps their past trips on record.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -527,7 +528,14 @@ function CrewCard() {
         </form>
         {sent ? (
           <p role="status" className="text-sm">
-            Invitation for {sent.email} created. <DevLink url={sent.invite_url} label="open the invite link" />
+            {sent.restored ? (
+              `${sent.email} is back on your crew, with their earlier trips still on record.`
+            ) : (
+              <>
+                Invitation for {sent.email} created.{" "}
+                <DevLink url={sent.invite_url} label="open the invite link" />
+              </>
+            )}
           </p>
         ) : null}
       </CardContent>

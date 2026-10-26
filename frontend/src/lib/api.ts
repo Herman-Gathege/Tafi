@@ -1,7 +1,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 export type OrganizationType = "school" | "operator";
-export type MembershipRole = "school_admin" | "driver" | "conductor" | "parent";
+export type MembershipRole = "school_admin" | "driver" | "conductor";
 
 export interface Organization {
   id: string;
@@ -147,16 +147,6 @@ export function signIn(email: string, password: string): Promise<Session> {
   });
 }
 
-/** A school creates itself and its first admin. */
-export function signUp(payload: {
-  school_name: string;
-  name: string;
-  email: string;
-  password: string;
-}): Promise<Session> {
-  return post<Session>("/api/v1/auth/signup", payload);
-}
-
 export function signOut(): Promise<void> {
   return request<void>("/api/v1/auth/sign-out", { method: "POST" });
 }
@@ -245,6 +235,9 @@ export interface ChildOnTrip {
   first_name: string;
   last_name: string;
   grade: string | null;
+  /** The stop that matters on this run: pickup in the morning, drop-off in the afternoon. */
+  stop: string;
+  stop_sequence: number;
   pickup_stop: string | null;
   dropoff_stop: string | null;
   state: "pending" | BoardingKind;
@@ -271,12 +264,18 @@ export interface TripDetail {
   /** What this crew member may do here (D-21). */
   my_role: "driver" | "conductor";
   driver_alone: boolean;
+  /** True for a driver working alone: marks need a recent "I am stopped" (D-32). */
+  must_confirm_stopped: boolean;
+  /** This crew member's own "I am stopped", as the server recorded it; null once too old. */
+  stopped_confirmed_at: string | null;
+  stopped_window_seconds: number;
 }
 
 export function listTodayTrips(): Promise<TripSummary[]> {
   return request<TripSummary[]>("/api/v1/crew/trips/today");
 }
 
+/** Start today's trip for a run. The server always uses today's date, Kenya time. */
 export function startTrip(routeRunId: string): Promise<TripDetail> {
   return post<TripDetail>("/api/v1/crew/trips", { route_run_id: routeRunId });
 }
@@ -289,10 +288,11 @@ export function endTrip(tripId: string): Promise<TripDetail> {
   return post<TripDetail>(`/api/v1/crew/trips/${encodeURIComponent(tripId)}/end`);
 }
 
-export function confirmStopped(tripId: string): Promise<{ confirmed_at: string }> {
-  return post<{ confirmed_at: string }>(
-    `/api/v1/crew/trips/${encodeURIComponent(tripId)}/stopped`,
-  );
+/** "I am stopped": the server records it; the next marks rely on that record (D-32). */
+export function confirmStopped(
+  tripId: string,
+): Promise<{ confirmed_at: string; valid_for_seconds: number }> {
+  return post(`/api/v1/crew/trips/${encodeURIComponent(tripId)}/stopped`);
 }
 
 export function markChild(
@@ -300,11 +300,16 @@ export function markChild(
   payload: {
     student_id: string;
     kind: BoardingKind;
-    stopped_confirmed_at?: string | null;
     latitude?: number | null;
     longitude?: number | null;
   },
-): Promise<{ id: string; kind: BoardingKind; method: string; recorded_at: string }> {
+): Promise<{
+  id: string;
+  kind: BoardingKind;
+  method: string;
+  recorded_at: string;
+  stopped_confirmed_at: string | null;
+}> {
   return post(`/api/v1/crew/trips/${encodeURIComponent(tripId)}/events`, payload);
 }
 
@@ -313,41 +318,6 @@ export function shareLocation(
   payload: { latitude: number; longitude: number; accuracy_m?: number | null },
 ): Promise<{ id: string; recorded_at: string }> {
   return post(`/api/v1/crew/trips/${encodeURIComponent(tripId)}/locations`, payload);
-}
-
-// --- A parent's own family (Sprint 4.5) --------------------------------------
-
-export interface ParentChild {
-  student_id: string;
-  first_name: string;
-  last_name: string;
-  grade: string | null;
-  route_code: string | null;
-  route_name: string | null;
-  pickup_stop: string | null;
-  dropoff_stop: string | null;
-}
-
-export interface ParentStopRequest {
-  id: string;
-  student_id: string;
-  status: string;
-  requested_at: string | null;
-}
-
-export interface ParentMe {
-  guardian_id: string;
-  full_name: string;
-  whatsapp_number: string;
-  status: string;
-  has_consent: boolean;
-  school_name: string;
-  children: ParentChild[];
-  stop_requests: ParentStopRequest[];
-}
-
-export function fetchParentMe(): Promise<ParentMe> {
-  return request<ParentMe>("/api/v1/parent/me");
 }
 
 // --- School data (Sprint 3) --------------------------------------------------
@@ -504,6 +474,8 @@ export interface CrewInvitation {
   role: MembershipRole;
   expires_at: string;
   invite_url: string | null;
+  /** True when a removed crew member was put back (D-34); no link is needed then. */
+  restored: boolean;
 }
 
 export interface Crew {

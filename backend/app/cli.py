@@ -2,10 +2,12 @@
 
 import argparse
 from collections.abc import Sequence
-from datetime import date, time
+from datetime import time
 
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.core.security import hash_password
 from app.db.session import SessionLocal
 from app.models.guardian import (
@@ -28,7 +30,10 @@ from app.models.transport import (
 from app.models.user import Membership, MembershipRole, User
 from app.schemas.common import normalise_email
 from app.services.consent import record_consent
+from app.services.trips import kenya_today
 
+# Development only. The password is in the repository, so `seed-demo` refuses to run
+# anywhere but `APP_ENV=local` (D-35).
 DEMO_PASSWORD = "TafiDemo2026!"
 DEMO_SCHOOL = "Riverside Academy (demo)"
 DEMO_ACCOUNTS = [
@@ -36,8 +41,11 @@ DEMO_ACCOUNTS = [
     ("demo.admin@tafi.test", "Demo School Admin", "school admin"),
     ("demo.driver@tafi.test", "Demo Driver", "driver"),
     ("demo.conductor@tafi.test", "Demo Conductor", "conductor"),
-    ("demo.parent@tafi.test", "Demo Parent", "parent"),
 ]
+
+
+class NotLocalError(RuntimeError):
+    """A development-only command was run outside `APP_ENV=local`."""
 
 
 def create_platform_admin(email: str, password: str, name: str | None = None) -> str:
@@ -68,7 +76,7 @@ def create_platform_admin(email: str, password: str, name: str | None = None) ->
         return f"Platform admin {action}: {address}"
 
 
-def _demo_user(db, email: str, name: str, *, platform: bool = False) -> User:
+def _demo_user(db: Session, email: str, name: str, *, platform: bool = False) -> User:
     """One account per role, with a known development password."""
     user = db.scalar(select(User).where(User.email == email))
     if user is None:
@@ -88,7 +96,9 @@ def _demo_user(db, email: str, name: str, *, platform: bool = False) -> User:
     return user
 
 
-def _demo_membership(db, user: User, org: Organization, role: MembershipRole) -> Membership:
+def _demo_membership(
+    db: Session, user: User, org: Organization, role: MembershipRole
+) -> Membership:
     membership = db.scalar(
         select(Membership).where(
             Membership.user_id == user.id, Membership.organization_id == org.id
@@ -100,12 +110,17 @@ def _demo_membership(db, user: User, org: Organization, role: MembershipRole) ->
         db.flush()
     else:
         membership.role = role
+        membership.is_active = True
     return membership
 
 
 def seed_demo() -> list[str]:
-    """Create a demo school with one account per role. Safe to run repeatedly."""
-    lines: list[str] = []
+    """Create a demo school with one account per role. Safe to run repeatedly. Local only."""
+    if get_settings().app_env != "local":
+        raise NotLocalError(
+            "seed-demo only runs with APP_ENV=local: its passwords are in the repository."
+        )
+
     with SessionLocal() as db:
         org = db.scalar(select(Organization).where(Organization.name == DEMO_SCHOOL))
         if org is None:
@@ -117,13 +132,13 @@ def seed_demo() -> list[str]:
         admin = _demo_user(db, "demo.admin@tafi.test", "Demo School Admin")
         driver = _demo_user(db, "demo.driver@tafi.test", "Demo Driver")
         conductor = _demo_user(db, "demo.conductor@tafi.test", "Demo Conductor")
-        parent = _demo_user(db, "demo.parent@tafi.test", "Demo Parent")
 
         _demo_membership(db, admin, org, MembershipRole.SCHOOL_ADMIN)
         driver_membership = _demo_membership(db, driver, org, MembershipRole.DRIVER)
         conductor_membership = _demo_membership(db, conductor, org, MembershipRole.CONDUCTOR)
-        _demo_membership(db, parent, org, MembershipRole.PARENT)
 
+        # A guardian record with consent, so the children have someone to notify. Parents
+        # sign in with a WhatsApp code in Sprint 5 (D-20); there is no parent login here.
         guardian = db.scalar(
             select(Guardian).where(
                 Guardian.organization_id == org.id, Guardian.whatsapp_number == "+254700000001"
@@ -134,12 +149,10 @@ def seed_demo() -> list[str]:
                 organization_id=org.id,
                 full_name="Demo Parent",
                 whatsapp_number="+254700000001",
-                email="demo.parent@tafi.test",
                 status=GuardianStatus.CONFIRMED,
             )
             db.add(guardian)
             db.flush()
-        guardian.user_id = parent.id
         record_consent(db, guardian, method=ConsentMethod.SCHOOL_RECORDED)
 
         route = db.scalar(select(Route).where(Route.organization_id == org.id, Route.code == "R1"))
@@ -165,27 +178,29 @@ def seed_demo() -> list[str]:
             db.add(vehicle)
             db.flush()
 
-        run = db.scalar(
-            select(RouteRun).where(
-                RouteRun.route_id == route.id, RouteRun.direction == RunDirection.MORNING
+        # Morning: driver and conductor. Afternoon: driver alone, to show the stopped rule.
+        for direction, departure, with_conductor in (
+            (RunDirection.MORNING, time(6, 30), True),
+            (RunDirection.AFTERNOON, time(16, 10), False),
+        ):
+            run = db.scalar(
+                select(RouteRun).where(
+                    RouteRun.route_id == route.id, RouteRun.direction == direction
+                )
             )
-        )
-        if run is None:
-            run = RouteRun(
-                organization_id=org.id,
-                route_id=route.id,
-                direction=RunDirection.MORNING,
-                departure_time=time(6, 30),
-                vehicle_id=vehicle.id,
-                driver_membership_id=driver_membership.id,
-                conductor_membership_id=conductor_membership.id,
-            )
-            db.add(run)
-            db.flush()
-        else:
+            if run is None:
+                run = RouteRun(
+                    organization_id=org.id,
+                    route_id=route.id,
+                    direction=direction,
+                    departure_time=departure,
+                    driver_membership_id=driver_membership.id,
+                )
+                db.add(run)
             run.vehicle_id = vehicle.id
             run.driver_membership_id = driver_membership.id
-            run.conductor_membership_id = conductor_membership.id
+            run.conductor_membership_id = conductor_membership.id if with_conductor else None
+            db.flush()
 
         for first, last, grade in [
             ("Wanjiru", "Otieno", "Grade 4"),
@@ -238,19 +253,16 @@ def seed_demo() -> list[str]:
                         route_id=route.id,
                         pickup_stop_id=stops[0].id,
                         dropoff_stop_id=stops[2].id,
-                        active_from=date.today(),
+                        active_from=kenya_today(),
                     )
                 )
 
         db.commit()
 
-    lines.append(f"Demo school: {DEMO_SCHOOL}")
-    lines.append("")
-    lines.append(f"{'role':<16}{'email':<28}password")
+    lines = [f"Demo school: {DEMO_SCHOOL}", "", f"{'role':<16}{'email':<28}password"]
     for email, _name, role in DEMO_ACCOUNTS:
         lines.append(f"{role:<16}{email:<28}{DEMO_PASSWORD}")
-    lines.append("")
-    lines.append("Development only — never use these accounts outside local.")
+    lines += ["", "Development only — never use these accounts outside local."]
     return lines
 
 
@@ -265,7 +277,7 @@ def build_parser() -> argparse.ArgumentParser:
     admin.add_argument("--password", required=True)
     admin.add_argument("--name", default=None)
 
-    subcommands.add_parser("seed-demo", help="create one demo account per role")
+    subcommands.add_parser("seed-demo", help="local only: one demo account per role")
     return parser
 
 
@@ -274,8 +286,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "create-platform-admin":
         print(create_platform_admin(args.email, args.password, args.name))
     elif args.command == "seed-demo":
-        for line in seed_demo():
-            print(line)
+        try:
+            for line in seed_demo():
+                print(line)
+        except NotLocalError as error:
+            print(error)
+            return 1
     return 0
 
 

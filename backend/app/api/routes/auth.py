@@ -17,9 +17,9 @@ from app.core.security import (
     verify_password,
 )
 from app.models.invitation import Invitation
-from app.models.organization import Organization, OrganizationType
+from app.models.organization import Organization
 from app.models.password_reset import PasswordResetToken
-from app.models.user import Membership, MembershipRole, User
+from app.models.user import Membership, User
 from app.schemas.auth import (
     AcceptInviteRequest,
     ForgotPasswordRequest,
@@ -29,7 +29,6 @@ from app.schemas.auth import (
     ResetPasswordRequest,
     SessionRead,
     SignInRequest,
-    SignupRequest,
     UserRead,
 )
 
@@ -109,43 +108,6 @@ def sign_in(payload: SignInRequest, response: Response, db: DbSession) -> Sessio
         or not verify_password(user.password_hash, payload.password)
     ):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Incorrect email or password")
-    set_session_cookie(response, user)
-    return build_session(db, user)
-
-
-@router.post("/signup", response_model=SessionRead, status_code=status.HTTP_201_CREATED)
-def signup(payload: SignupRequest, response: Response, db: DbSession) -> SessionRead:
-    """A school creates itself and its first admin in one step.
-
-    This is the only self-service entry point: Tafi staff can still onboard a school and
-    invite an admin, but a school no longer needs to wait for them to start.
-    """
-    if db.scalar(select(User).where(User.email == payload.email)) is not None:
-        raise HTTPException(
-            status.HTTP_409_CONFLICT, "That email already has an account. Sign in instead."
-        )
-
-    organization = Organization(name=payload.school_name.strip(), type=OrganizationType.SCHOOL)
-    db.add(organization)
-    db.flush()
-
-    user = User(
-        email=payload.email,
-        name=payload.name.strip(),
-        password_hash=hash_password(payload.password),
-    )
-    db.add(user)
-    db.flush()
-    db.add(
-        Membership(
-            user_id=user.id,
-            organization_id=organization.id,
-            role=MembershipRole.SCHOOL_ADMIN,
-        )
-    )
-    db.commit()
-    db.refresh(user)
-
     set_session_cookie(response, user)
     return build_session(db, user)
 

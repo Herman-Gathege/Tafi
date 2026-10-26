@@ -41,15 +41,6 @@ class SignInRequest(BaseModel):
     password: str = Field(min_length=1, max_length=128)
 
 
-class SignupRequest(BaseModel):
-    """A school signs itself up: one admin account and the school it belongs to."""
-
-    school_name: str = Field(min_length=1, max_length=255)
-    name: str = Field(min_length=1, max_length=255)
-    email: Email
-    password: str = Field(min_length=8, max_length=128)
-
-
 class AcceptInviteRequest(BaseModel):
     """Set a name and password against an invitation token."""
 

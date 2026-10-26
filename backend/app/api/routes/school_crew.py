@@ -2,6 +2,10 @@
 
 School admins invite crew with the same single-use, expiring invitation as Sprint 2 (D-18); the
 invitee accepts it at /accept-invite and joins the school with the invited role.
+
+Crew are **deactivated, never deleted** (D-34): once someone has driven or marked children,
+trips, boarding events and locations point at their membership, and that record must stay
+attributed to them. A deactivated member cannot sign in to the school or be given a run.
 """
 
 import uuid
@@ -24,13 +28,14 @@ router = APIRouter(prefix="/api/v1/school/crew", tags=["school"])
 
 @router.get("", response_model=CrewRead)
 def list_crew(admin: SchoolAdmin, db: DbSession) -> CrewRead:
-    """Everyone on the school's crew, and invitations not yet accepted."""
+    """Everyone currently on the school's crew, and invitations not yet accepted."""
     rows = db.execute(
         select(Membership, User)
         .join(User, User.id == Membership.user_id)
         .where(
             Membership.organization_id == admin.organization_id,
             Membership.role.in_(CREW_ROLES),
+            Membership.is_active.is_(True),
         )
         .order_by(User.name)
     ).all()
@@ -71,15 +76,30 @@ def list_crew(admin: SchoolAdmin, db: DbSession) -> CrewRead:
 def invite_crew(
     payload: CrewInvitationCreate, admin: SchoolAdmin, db: DbSession
 ) -> CrewInvitationRead:
-    """Invite a driver or a conductor. Sending again simply issues a fresh link."""
+    """Invite a driver or a conductor. Someone removed earlier is simply restored."""
     settings = get_settings()
-    already_member = db.scalar(
-        select(Membership.id)
+    existing = db.scalar(
+        select(Membership)
         .join(User, User.id == Membership.user_id)
         .where(Membership.organization_id == admin.organization_id, User.email == payload.email)
     )
-    if already_member is not None:
+    if existing is not None and existing.is_active:
         raise HTTPException(status.HTTP_409_CONFLICT, f"{payload.email} is already at your school")
+    if existing is not None:
+        if existing.role not in CREW_ROLES:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT, f"{payload.email} is already at your school"
+            )
+        existing.is_active = True
+        existing.role = payload.role
+        db.commit()
+        return CrewInvitationRead(
+            id=existing.id,
+            email=payload.email,
+            role=existing.role,
+            expires_at=utcnow(),
+            restored=True,
+        )
 
     token = generate_token()
     invitation = Invitation(
@@ -110,9 +130,12 @@ def invite_crew(
 
 @router.delete("/members/{membership_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_crew_member(membership_id: uuid.UUID, admin: SchoolAdmin, db: DbSession) -> None:
-    """Take someone off the crew. A driver who still drives a run must be replaced first."""
+    """Take someone off the crew. Their past trips stay on record under their name (D-34).
+
+    A driver who still drives a run must be replaced first.
+    """
     membership = get_owned_or_404(db, Membership, membership_id, admin, what="crew member")
-    if membership.role not in CREW_ROLES:
+    if membership.role not in CREW_ROLES or not membership.is_active:
         # School admins are managed by Tafi staff, not from the crew page.
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such crew member")
 
@@ -124,10 +147,10 @@ def remove_crew_member(membership_id: uuid.UUID, admin: SchoolAdmin, db: DbSessi
             status.HTTP_409_CONFLICT,
             "This driver still drives a run. Choose another driver for it first.",
         )
-    # A conductor's runs keep going without one (the foreign key sets it to null).
+    # A conductor's runs keep going without one.
     for run in db.scalars(
         select(RouteRun).where(RouteRun.conductor_membership_id == membership.id)
     ):
         run.conductor_membership_id = None
-    db.delete(membership)
+    membership.is_active = False
     db.commit()

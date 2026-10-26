@@ -101,6 +101,32 @@ def test_a_driver_on_a_run_must_be_replaced_before_removal(
     assert run.conductor_membership_id is None
     assert [m["role"] for m in client.get(CREW).json()["members"]] == ["driver"]
 
+    # Removed means deactivated, not deleted (D-34): they cannot be put back on a run...
+    db_session.refresh(conductor)
+    assert conductor.is_active is False
+    given_a_run = client.put(
+        f"/api/v1/school/routes/{run.route_id}/runs/morning",
+        json={
+            "departure_time": "06:30",
+            "driver_membership_id": str(driver.id),
+            "conductor_membership_id": str(conductor.id),
+        },
+    )
+    assert given_a_run.status_code == 404
+    assert client.delete(f"{CREW}/members/{conductor.id}").status_code == 404
+
+    # ...until the school invites them again, which restores them with their history.
+    again = client.post(
+        f"{CREW}/invitations", json={"email": "mercy@example.com", "role": "conductor"}
+    )
+    assert again.status_code == 201
+    assert again.json()["restored"] is True
+    assert again.json()["invite_url"] is None
+    assert sorted(m["role"] for m in client.get(CREW).json()["members"]) == [
+        "conductor",
+        "driver",
+    ]
+
 
 def test_school_admins_and_other_schools_crew_are_not_removable_here(
     client: TestClient, db_session: Session

@@ -27,9 +27,6 @@ export interface SessionState {
   school: Session["memberships"][number] | null;
   /** The crew membership (driver or conductor) if this person is crew anywhere. */
   crew: Session["memberships"][number] | null;
-  /** The parent membership, if this account belongs to a guardian. */
-  parent: Session["memberships"][number] | null;
-  isParent: boolean;
 }
 
 export function useSession(): SessionState {
@@ -52,8 +49,6 @@ export function useSession(): SessionState {
       session?.memberships.find(
         (membership) => membership.role === "driver" || membership.role === "conductor",
       ) ?? null,
-    parent: session?.memberships.find((membership) => membership.role === "parent") ?? null,
-    isParent: session?.memberships.some((membership) => membership.role === "parent") ?? false,
   };
 }
 

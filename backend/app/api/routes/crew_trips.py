@@ -1,14 +1,18 @@
-"""The crew app's API: today's trips, starting and ending them, marks and location (Sprint 4)."""
+"""The crew app's API: today's trips, starting and ending them, marks and location (Sprint 4).
+
+Every rule lives in `app.services.trips`; these handlers only load, call and shape.
+"""
 
 import uuid
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.api.deps import Crew, DbSession
-from app.models.student import Student
 from app.models.transport import Route, RouteRun, Stop, Vehicle
-from app.models.trip import BoardingEvent, TripLocation, TripStatus
+from app.models.trip import BoardingEvent, Trip, TripLocation, TripStatus
+from app.models.user import Membership
 from app.schemas.crew_trips import (
     BoardingEventCreate,
     BoardingEventRead,
@@ -25,36 +29,30 @@ from app.services import trips as trip_service
 router = APIRouter(prefix="/api/v1/crew", tags=["crew"])
 
 
-def _stop_name(db: DbSession, stop_id) -> str | None:
-    if stop_id is None:
-        return None
-    stop = db.get(Stop, stop_id)
-    return stop.name if stop else None
-
-
-def _detail(db: DbSession, membership, trip) -> TripDetail:
-    run = db.get(RouteRun, trip.route_run_id)
-    if run is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such trip")
+def _detail(db: Session, membership: Membership, trip: Trip, run: RouteRun) -> TripDetail:
     route = db.get(Route, run.route_id)
     vehicle = db.get(Vehicle, run.vehicle_id) if run.vehicle_id else None
-    assignments = trip_service.assignments_for_run(db, run)
+    riders = trip_service.riders_for_run(db, run)
     states = trip_service.current_states(db, trip)
+    stop_names = {
+        stop.id: stop.name for stop in db.scalars(select(Stop).where(Stop.route_id == run.route_id))
+    }
 
     children = []
-    for assignment in assignments:
-        student = db.get(Student, assignment.student_id)
-        if student is None:
-            continue
-        state = states.get(student.id)
+    for rider in riders:
+        state = states.get(rider.student.id)
+        pickup_id = rider.assignment.pickup_stop_id
+        dropoff_id = rider.assignment.dropoff_stop_id
         children.append(
             ChildOnTrip(
-                student_id=student.id,
-                first_name=student.first_name,
-                last_name=student.last_name,
-                grade=student.grade,
-                pickup_stop=_stop_name(db, assignment.pickup_stop_id),
-                dropoff_stop=_stop_name(db, assignment.dropoff_stop_id),
+                student_id=rider.student.id,
+                first_name=rider.student.first_name,
+                last_name=rider.student.last_name,
+                grade=rider.student.grade,
+                stop=rider.stop.name,
+                stop_sequence=rider.stop.sequence,
+                pickup_stop=stop_names.get(pickup_id) if pickup_id else None,
+                dropoff_stop=stop_names.get(dropoff_id) if dropoff_id else None,
                 state=state.value if state is not None else "pending",
             )
         )
@@ -66,9 +64,6 @@ def _detail(db: DbSession, membership, trip) -> TripDetail:
             .order_by(TripLocation.recorded_at)
         )
     )
-    boarded = sum(1 for c in children if c.state == "boarded")
-    dropped = sum(1 for c in children if c.state == "dropped_off")
-    absent = sum(1 for c in children if c.state == "absent")
     return TripDetail(
         id=trip.id,
         route_run_id=trip.route_run_id,
@@ -82,13 +77,16 @@ def _detail(db: DbSession, membership, trip) -> TripDetail:
         started_at=trip.started_at,
         ended_at=trip.ended_at,
         children=children,
-        boarded_count=boarded,
-        dropped_off_count=dropped,
-        absent_count=absent,
+        boarded_count=sum(1 for child in children if child.state == "boarded"),
+        dropped_off_count=sum(1 for child in children if child.state == "dropped_off"),
+        absent_count=sum(1 for child in children if child.state == "absent"),
         location_count=len(locations),
         last_location_at=locations[-1].recorded_at if locations else None,
-        my_role=("driver" if membership.id == run.driver_membership_id else "conductor"),
+        my_role="driver" if membership.id == run.driver_membership_id else "conductor",
         driver_alone=trip_service.driver_is_alone(run),
+        must_confirm_stopped=trip_service.must_confirm_stopped(run, membership),
+        stopped_confirmed_at=trip_service.fresh_stopped_confirmation(trip, membership),
+        stopped_window_seconds=trip_service.STOPPED_CONFIRMATION_SECONDS,
     )
 
 
@@ -101,17 +99,17 @@ def todays_trips(membership: Crew, db: DbSession) -> list[TripSummary]:
         trip = trip_service.trip_for_run(db, run, service_date)
         route = db.get(Route, run.route_id)
         vehicle = db.get(Vehicle, run.vehicle_id) if run.vehicle_id else None
-        boarded = dropped = absent = expected = 0
+        boarded = dropped = absent = 0
         if trip is not None:
-            detail = _detail(db, membership, trip)
-            boarded, dropped, absent, expected = (
+            detail = _detail(db, membership, trip, run)
+            boarded, dropped, absent = (
                 detail.boarded_count,
                 detail.dropped_off_count,
                 detail.absent_count,
-                len(detail.children),
             )
+            expected = len(detail.children)
         else:
-            expected = len(trip_service.assignments_for_run(db, run))
+            expected = len(trip_service.riders_for_run(db, run))
         summaries.append(
             TripSummary(
                 id=trip.id if trip else None,
@@ -138,28 +136,38 @@ def todays_trips(membership: Crew, db: DbSession) -> list[TripSummary]:
 def start_trip(payload: TripStart, membership: Crew, db: DbSession) -> TripDetail:
     """Start today's trip for a run. Starting it twice returns the same trip."""
     run = trip_service.load_run(db, payload.route_run_id, membership)
-    service_date = payload.service_date or trip_service.kenya_today()
-    trip = trip_service.start_trip(db, membership, run, service_date)
+    trip = trip_service.start_trip(db, membership, run)
     db.commit()
     db.refresh(trip)
-    return _detail(db, membership, trip)
+    return _detail(db, membership, trip, run)
 
 
 @router.post("/trips/{trip_id}/end", response_model=TripDetail)
 def end_trip(trip_id: uuid.UUID, membership: Crew, db: DbSession) -> TripDetail:
     """Finish a running trip."""
-    trip = trip_service.load_trip(db, trip_id, membership)
+    trip, run = trip_service.load_trip(db, trip_id, membership)
     trip_service.end_trip(db, membership, trip)
     db.commit()
     db.refresh(trip)
-    return _detail(db, membership, trip)
+    return _detail(db, membership, trip, run)
 
 
 @router.get("/trips/{trip_id}", response_model=TripDetail)
 def trip_detail(trip_id: uuid.UUID, membership: Crew, db: DbSession) -> TripDetail:
-    """One trip: the children expected, where they are up to, and the location trail."""
-    trip = trip_service.load_trip(db, trip_id, membership)
-    return _detail(db, membership, trip)
+    """One trip: the children this run carries, where they are up to, and the location trail."""
+    trip, run = trip_service.load_trip(db, trip_id, membership)
+    return _detail(db, membership, trip, run)
+
+
+@router.post("/trips/{trip_id}/stopped", response_model=StoppedConfirmation)
+def confirm_stopped(trip_id: uuid.UUID, membership: Crew, db: DbSession) -> StoppedConfirmation:
+    """'I am stopped': recorded by the server, and required before a lone driver marks (D-32)."""
+    trip, _ = trip_service.load_trip(db, trip_id, membership)
+    confirmed_at = trip_service.confirm_stopped(db, membership, trip)
+    db.commit()
+    return StoppedConfirmation(
+        confirmed_at=confirmed_at, valid_for_seconds=trip_service.STOPPED_CONFIRMATION_SECONDS
+    )
 
 
 @router.post(
@@ -169,10 +177,7 @@ def mark_child(
     trip_id: uuid.UUID, payload: BoardingEventCreate, membership: Crew, db: DbSession
 ) -> BoardingEvent:
     """Mark a child boarded, dropped off or absent (D-21)."""
-    trip = trip_service.load_trip(db, trip_id, membership)
-    run = db.get(RouteRun, trip.route_run_id)
-    if run is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such trip")
+    trip, run = trip_service.load_trip(db, trip_id, membership)
     event = trip_service.record_event(
         db,
         membership,
@@ -180,20 +185,12 @@ def mark_child(
         run,
         student_id=payload.student_id,
         kind=payload.kind,
-        stopped_confirmed_at=payload.stopped_confirmed_at,
         latitude=payload.latitude,
         longitude=payload.longitude,
     )
     db.commit()
     db.refresh(event)
     return event
-
-
-@router.post("/trips/{trip_id}/stopped", response_model=StoppedConfirmation)
-def confirm_stopped(trip_id: uuid.UUID, membership: Crew, db: DbSession) -> StoppedConfirmation:
-    """A driver working alone confirms the vehicle is stopped; the app shows the time."""
-    trip_service.load_trip(db, trip_id, membership)
-    return StoppedConfirmation(confirmed_at=trip_service.utcnow())
 
 
 @router.post(
@@ -205,7 +202,7 @@ def share_location(
     trip_id: uuid.UUID, payload: TripLocationCreate, membership: Crew, db: DbSession
 ) -> TripLocation:
     """Share a position while the trip is running (MVP-11)."""
-    trip = trip_service.load_trip(db, trip_id, membership)
+    trip, _ = trip_service.load_trip(db, trip_id, membership)
     location = trip_service.record_location(
         db,
         membership,
