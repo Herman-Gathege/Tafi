@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Bus, Inbox, LayoutDashboard, LogOut, Route as RouteIcon, Shield, Users } from "lucide-react";
-import { Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import {
   Sidebar,
@@ -34,7 +34,7 @@ export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const signOut = useSignOut();
-  const { user, school, isPlatformAdmin, crew, isParent } = useSession();
+  const { user, school, isPlatformAdmin, crew } = useSession();
   const isSchoolAdmin = school?.role === "school_admin";
 
   const pendingRequests = useQuery({
@@ -43,11 +43,6 @@ export function AppShell() {
     enabled: isSchoolAdmin,
   });
   const pendingCount = pendingRequests.data?.length ?? 0;
-
-  // A parent's home is their family, not the school's operations.
-  if (isParent && !isSchoolAdmin && !isPlatformAdmin && !crew) {
-    return <Navigate to="/parent" replace />;
-  }
 
   const items: NavItem[] = [
     { to: "/app", label: "Today", icon: LayoutDashboard, end: true },

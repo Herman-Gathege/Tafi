@@ -9,7 +9,6 @@ from app.api.routes.guardian_invites import router as guardian_invites_router
 from app.api.routes.health import router as health_router
 from app.api.routes.organizations import router as organizations_router
 from app.api.routes.organizations import tenant_router
-from app.api.routes.parent import router as parent_router
 from app.api.routes.school_crew import router as school_crew_router
 from app.api.routes.school_guardians import router as school_guardians_router
 from app.api.routes.school_import import router as school_import_router
@@ -43,7 +42,6 @@ def create_app() -> FastAPI:
     app.include_router(school_guardians_router)
     app.include_router(guardian_invites_router)
     app.include_router(crew_trips_router)
-    app.include_router(parent_router)
     return app
 
 

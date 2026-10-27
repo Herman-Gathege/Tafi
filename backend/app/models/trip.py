@@ -28,7 +28,7 @@ class TripStatus(enum.StrEnum):
 
 
 class Trip(IdMixin, OrganizationScopedMixin, TimestampsMixin, Base):
-    """One run of one route on one day.
+    """One run of one route on one day — always today, Kenya time, when it starts.
 
     The run (`route_runs`) says who drives and which vehicle; the trip says what happened
     today: when it started, when it ended, and who did that (D-21).
@@ -53,6 +53,14 @@ class Trip(IdMixin, OrganizationScopedMixin, TimestampsMixin, Base):
         Uuid, ForeignKey("memberships.id", ondelete="SET NULL"), nullable=True
     )
     ended_by_membership_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("memberships.id", ondelete="SET NULL"), nullable=True
+    )
+    # The latest "I am stopped" from a driver working alone (D-32), recorded by the server
+    # when the driver presses the button. Marks check this, never a time the phone sends.
+    stopped_confirmed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    stopped_confirmed_by_membership_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("memberships.id", ondelete="SET NULL"), nullable=True
     )
 
@@ -94,6 +102,11 @@ class BoardingEvent(IdMixin, OrganizationScopedMixin, CreatedAtMixin, Base):
     recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     latitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6), nullable=True)
     longitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6), nullable=True)
+    # Set when a driver working alone marked this child: the stopped confirmation the mark
+    # relied on, so the record shows the rule was followed (D-32).
+    stopped_confirmed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
 
 class TripLocation(IdMixin, OrganizationScopedMixin, CreatedAtMixin, Base):

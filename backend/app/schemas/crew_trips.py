@@ -31,12 +31,16 @@ class TripSummary(BaseModel):
 
 
 class ChildOnTrip(BaseModel):
-    """One child expected on the trip, and where they are up to."""
+    """One child this run carries, and where they are up to."""
 
     student_id: uuid.UUID
     first_name: str
     last_name: str
     grade: str | None = None
+    # The stop that matters on this run: the pickup in the morning, the drop-off in the
+    # afternoon. Children are listed in the order the vehicle reaches these stops.
+    stop: str
+    stop_sequence: int
     pickup_stop: str | None = None
     dropoff_stop: str | None = None
     state: str  # pending | boarded | dropped_off | absent
@@ -65,19 +69,23 @@ class TripDetail(BaseModel):
     # What this crew member may do here (D-21).
     my_role: str = "driver"
     driver_alone: bool = False
+    must_confirm_stopped: bool = False
+    # This crew member's own "I am stopped", as the server recorded it (D-32).
+    stopped_confirmed_at: datetime | None = None
+    stopped_window_seconds: int = 120
 
 
 class TripStart(BaseModel):
-    """Start the trip for a run."""
+    """Start today's trip for a run. The date is always today, Kenya time."""
 
     route_run_id: uuid.UUID
-    service_date: date | None = None
 
 
 class StoppedConfirmation(BaseModel):
-    """A driver alone confirms the vehicle is stopped. The timestamp is what the API trusts."""
+    """The server's record of "I am stopped" (D-32)."""
 
     confirmed_at: datetime
+    valid_for_seconds: int
 
 
 class BoardingEventCreate(BaseModel):
@@ -85,8 +93,6 @@ class BoardingEventCreate(BaseModel):
 
     student_id: uuid.UUID
     kind: BoardingKind
-    # Required when the driver is alone on the run (D-21); the server checks the age of this.
-    stopped_confirmed_at: datetime | None = None
     latitude: Decimal | None = Field(default=None, ge=-90, le=90)
     longitude: Decimal | None = Field(default=None, ge=-180, le=180)
 
@@ -103,6 +109,7 @@ class BoardingEventRead(BaseModel):
     method: BoardingMethod
     recorded_by_membership_id: uuid.UUID
     recorded_at: datetime
+    stopped_confirmed_at: datetime | None = None
 
 
 class TripLocationCreate(BaseModel):

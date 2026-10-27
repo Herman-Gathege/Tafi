@@ -24,7 +24,11 @@ class CrewInvitationCreate(BaseModel):
 
 
 class CrewInvitationRead(BaseModel):
-    """An invitation as returned to the school admin who sent it."""
+    """An invitation as returned to the school admin who sent it.
+
+    `restored` is true when the person was on the crew before and removed: they are put
+    back straight away with their history intact (D-34), and no link is needed.
+    """
 
     id: uuid.UUID
     email: str
@@ -32,6 +36,7 @@ class CrewInvitationRead(BaseModel):
     expires_at: datetime
     # Only in `local`, until messages can be sent (D-18).
     invite_url: str | None = None
+    restored: bool = False
 
 
 class CrewMemberRead(BaseModel):

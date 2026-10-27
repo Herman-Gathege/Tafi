@@ -101,6 +101,9 @@ def crew_member(
 ) -> Membership:
     """A membership in the admin's school that holds the expected crew role."""
     membership = get_owned_or_404(db, Membership, membership_id, admin, what="crew member")
+    if not membership.is_active:
+        # Removed from the crew (D-34): kept for history, never given new work.
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such crew member")
     if membership.role != role:
         raise HTTPException(UNPROCESSABLE, f"That person is not a {role.value}")
     return membership

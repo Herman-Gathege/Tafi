@@ -15,12 +15,7 @@ export function relationshipLabel(value: GuardianRelationship) {
 }
 
 export function roleLabel(role: MembershipRole) {
-  return {
-    school_admin: "School admin",
-    driver: "Driver",
-    conductor: "Conductor",
-    parent: "Parent",
-  }[role];
+  return { school_admin: "School admin", driver: "Driver", conductor: "Conductor" }[role];
 }
 
 /** The WhatsApp column of the wireframe. */

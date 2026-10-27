@@ -36,7 +36,6 @@ class Guardian(IdMixin, OrganizationScopedMixin, TimestampsMixin, Base):
         UniqueConstraint(
             "organization_id", "whatsapp_number", name="uq_guardian_organization_whatsapp"
         ),
-        UniqueConstraint("user_id", name="uq_guardian_user"),
     )
 
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -48,10 +47,6 @@ class Guardian(IdMixin, OrganizationScopedMixin, TimestampsMixin, Base):
         nullable=False,
         default=GuardianStatus.INVITED,
         server_default=GuardianStatus.INVITED.value,
-    )
-    # Set when the guardian is given a login. Null for guardians who only use the invite link.
-    user_id: Mapped[uuid.UUID | None] = mapped_column(
-        Uuid, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
 
 
