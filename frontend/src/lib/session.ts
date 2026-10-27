@@ -15,6 +15,7 @@ import {
   type Session,
   type User,
 } from "@/lib/api";
+import { crewMembership, parentMembership, schoolMembership } from "@/lib/roles";
 
 export const sessionKey = ["session"] as const;
 
@@ -47,12 +48,9 @@ export function useSession(): SessionState {
     isSignedIn: session !== null,
     isPlatformAdmin: session?.user.is_platform_admin ?? false,
     isLoading: query.isPending,
-    school: session?.memberships[0] ?? null,
-    crew:
-      session?.memberships.find(
-        (membership) => membership.role === "driver" || membership.role === "conductor",
-      ) ?? null,
-    parent: session?.memberships.find((membership) => membership.role === "parent") ?? null,
+    school: schoolMembership(session),
+    crew: crewMembership(session),
+    parent: parentMembership(session),
     isParent: session?.memberships.some((membership) => membership.role === "parent") ?? false,
   };
 }

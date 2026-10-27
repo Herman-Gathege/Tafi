@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError, signUp } from "@/lib/api";
+import { roleHome } from "@/lib/roles";
 import { sessionKey } from "@/lib/session";
 
 /** The one new function in this pass: a school creates itself and its first admin. */
@@ -22,7 +23,7 @@ export function SignupPage() {
     mutationFn: signUp,
     onSuccess: (session) => {
       queryClient.setQueryData(sessionKey, session);
-      navigate("/app", { replace: true });
+      navigate(roleHome(session), { replace: true });
     },
   });
 

@@ -51,10 +51,10 @@ const router = createBrowserRouter([
       {
         element: <AppShell />,
         children: [
-          { index: true, element: <DashboardPage /> },
           {
             element: <RequireSchoolAdmin />,
             children: [
+              { index: true, element: <DashboardPage /> },
               { path: "children", element: <ChildrenPage /> },
               { path: "routes", element: <RoutesPage /> },
               { path: "requests", element: <StopRequestsPage /> },

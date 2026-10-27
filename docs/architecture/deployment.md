@@ -70,6 +70,7 @@ DigitalOcean account (C-04).
 
    ```sh
    APP_ENV=staging
+   ALLOW_SELF_SIGNUP=false
    SECRET_KEY=<generate: python -c "import secrets; print(secrets.token_urlsafe(48))">
    DATABASE_URL=postgresql+psycopg://<user>:<password>@<host>:25060/<db>?sslmode=require
    REDIS_URL=redis://redis:6379/0
@@ -82,15 +83,15 @@ DigitalOcean account (C-04).
 4. **Start.**
 
    ```sh
-   DOMAIN=<domain> VITE_API_BASE_URL=https://<domain> \
+   DOMAIN=<domain> \
      docker compose -f docker-compose.prod.yml up -d --build
    docker compose -f docker-compose.prod.yml exec api alembic upgrade head
    docker compose -f docker-compose.prod.yml exec api \
      python -m app.cli create-platform-admin --email <you> --password <a long one>
    ```
 
-   `VITE_API_BASE_URL` is baked into the web image at build time — rebuild the `web` service when the domain
-   changes.
+   The web image calls `/api/*` on its own origin, and the web/Caddy layers proxy that path to the internal API.
+   Do not publish the API port directly or set `VITE_API_BASE_URL` to an API port.
 5. **Check.** `https://<domain>/health` returns `{"status":"ok",...}`, the certificate is valid, and signing in at
    `https://<domain>/signin` works.
 6. **Routine.** Nightly `pg_dump` off-host with a retention policy, and a restore test before the pilot starts.

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api";
+import { roleHome } from "@/lib/roles";
 import { useSignIn } from "@/lib/session";
 
 export function SignInPage() {
@@ -22,17 +23,7 @@ export function SignInPage() {
       {
         onSuccess: (session) => {
           const from = (location.state as { from?: string } | null)?.from;
-          const roles = session.memberships.map((membership) => membership.role);
-          const home = session.user.is_platform_admin
-            ? "/app/admin"
-            : roles.includes("school_admin")
-              ? "/app"
-              : roles.includes("driver") || roles.includes("conductor")
-                ? "/crew"
-                : roles.includes("parent")
-                  ? "/parent"
-                  : "/app";
-          navigate(from ?? home, { replace: true });
+          navigate(from ?? roleHome(session), { replace: true });
         },
       },
     );

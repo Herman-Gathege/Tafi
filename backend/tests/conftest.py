@@ -8,9 +8,21 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core.config import get_settings
+from app.core.rate_limit import clear_rate_limits
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import create_app
+
+
+@pytest.fixture(autouse=True)
+def reset_runtime_state() -> Iterator[None]:
+    """Settings and rate-limit counters must not leak between tests."""
+    get_settings.cache_clear()
+    clear_rate_limits()
+    yield
+    clear_rate_limits()
+    get_settings.cache_clear()
 
 
 @pytest.fixture

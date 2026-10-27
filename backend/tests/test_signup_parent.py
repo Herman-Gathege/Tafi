@@ -3,6 +3,7 @@
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.models.guardian import Guardian, GuardianRelationship, GuardianStatus, StudentGuardian
 from app.models.student import Student, StudentStatus
 from app.models.transport import Route, Stop, StudentRouteAssignment
@@ -46,6 +47,57 @@ def test_signup_refuses_an_email_that_already_exists(
         },
     )
     assert response.status_code == 409
+
+
+def test_signup_is_disabled_outside_local_by_default(client: TestClient, monkeypatch) -> None:
+    monkeypatch.setenv("APP_ENV", "staging")
+    monkeypatch.delenv("ALLOW_SELF_SIGNUP", raising=False)
+    get_settings.cache_clear()
+
+    response = client.post(
+        "/api/v1/auth/signup",
+        json={
+            "school_name": "Closed School",
+            "name": "Someone",
+            "email": "closed@example.test",
+            "password": "a-good-password",
+        },
+    )
+
+    assert response.status_code == 403
+    assert "not enabled" in response.json()["detail"]
+
+
+def test_signup_is_rate_limited_per_client_address(
+    client: TestClient, monkeypatch
+) -> None:
+    monkeypatch.setenv("AUTH_SIGNUP_LIMIT", "1")
+    get_settings.cache_clear()
+    headers = {"X-Real-IP": "198.51.100.11"}
+
+    first = client.post(
+        "/api/v1/auth/signup",
+        headers=headers,
+        json={
+            "school_name": "First School",
+            "name": "First Admin",
+            "email": "first@example.test",
+            "password": "a-good-password",
+        },
+    )
+    limited = client.post(
+        "/api/v1/auth/signup",
+        headers=headers,
+        json={
+            "school_name": "Second School",
+            "name": "Second Admin",
+            "email": "second@example.test",
+            "password": "a-good-password",
+        },
+    )
+
+    assert first.status_code == 201
+    assert limited.status_code == 429
 
 
 def build_family(db: Session):

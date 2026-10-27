@@ -3,7 +3,7 @@
 from functools import lru_cache
 from typing import Annotated
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     session_ttl_hours: int = 12
     session_cookie_secure: bool = False
 
+    # None follows APP_ENV: enabled locally, disabled everywhere else.
+    allow_self_signup: bool | None = None
+    auth_sign_in_limit: int = Field(default=20, ge=1)
+    auth_signup_limit: int = Field(default=5, ge=1)
+    auth_rate_window_seconds: int = Field(default=60, ge=1)
+
     # Invitations and password resets.
     invite_ttl_days: int = 7
     reset_ttl_hours: int = 2
@@ -46,6 +52,13 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
+
+    @property
+    def self_signup_enabled(self) -> bool:
+        """Signup is opt-in outside local development."""
+        if self.allow_self_signup is not None:
+            return self.allow_self_signup
+        return self.app_env == "local"
 
 
 @lru_cache

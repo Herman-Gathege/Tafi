@@ -50,7 +50,9 @@ npm install
 npm run dev
 ```
 
-The API base URL comes from `VITE_API_BASE_URL` and falls back to `http://localhost:8000`.
+The API base URL comes from `VITE_API_BASE_URL`. It is normally empty so browser calls stay on the current
+origin (`/api/v1/...`); Vite proxies those requests to `VITE_API_PROXY_TARGET` in local development and Nginx
+proxies them to the internal API container in production.
 
 ## Checks
 

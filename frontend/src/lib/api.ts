@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
 export type OrganizationType = "school" | "operator";
 export type MembershipRole = "school_admin" | "driver" | "conductor" | "parent";
@@ -73,7 +73,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       ...init,
     });
   } catch {
-    throw new ApiError(`Cannot reach the Tafi API at ${API_BASE_URL}.`, 0);
+    const target = API_BASE_URL || window.location.origin;
+    throw new ApiError(`Cannot reach the Tafi API at ${target}.`, 0);
   }
 
   if (!response.ok) {

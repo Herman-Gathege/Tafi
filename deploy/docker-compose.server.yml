@@ -1,0 +1,95 @@
+# Low-memory public test deployment. Images are built off-host and loaded on the server.
+#
+#   docker load -i tafi-images.tar
+#   docker compose -f docker-compose.server.yml up -d
+#
+# The browser reaches the web service only. Nginx proxies /api and /health to the
+# internal API service, so no second public port or CORS origin is required.
+
+name: tafi
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tafi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: tafi
+    volumes:
+      - tafi_db_data:/var/lib/postgresql/data
+    mem_limit: 160m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tafi -d tafi"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - tafi_redis_data:/data
+    mem_limit: 48m
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+
+  api:
+    image: tafi-api:prod
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      DATABASE_URL: postgresql+psycopg://tafi:${POSTGRES_PASSWORD}@db:5432/tafi
+      REDIS_URL: redis://redis:6379/0
+    mem_limit: 224m
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request as u; u.urlopen('http://localhost:8000/health')\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+
+  worker:
+    image: tafi-api:prod
+    restart: unless-stopped
+    command: ["celery", "-A", "app.worker.celery_app", "worker", "--beat", "--loglevel=info"]
+    env_file:
+      - .env.production
+    environment:
+      DATABASE_URL: postgresql+psycopg://tafi:${POSTGRES_PASSWORD}@db:5432/tafi
+      REDIS_URL: redis://redis:6379/0
+    mem_limit: 128m
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    image: tafi-web:prod
+    restart: unless-stopped
+    ports:
+      - "18080:80"
+    mem_limit: 48m
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  tafi_db_data:
+  tafi_redis_data:

@@ -20,6 +20,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { listStopChangeRequests } from "@/lib/api";
+import { roleHome } from "@/lib/roles";
 import { schoolKeys } from "@/lib/school-queries";
 import { useSession, useSignOut } from "@/lib/session";
 
@@ -35,8 +36,8 @@ export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const signOut = useSignOut();
-  const { user, school, isPlatformAdmin, crew, isParent } = useSession();
-  const isSchoolAdmin = school?.role === "school_admin";
+  const { session, user, school, isPlatformAdmin, crew } = useSession();
+  const isSchoolAdmin = !isPlatformAdmin && school?.role === "school_admin";
 
   const pendingRequests = useQuery({
     queryKey: schoolKeys.stopRequests,
@@ -45,14 +46,17 @@ export function AppShell() {
   });
   const pendingCount = pendingRequests.data?.length ?? 0;
 
-  // A parent's home is their family, not the school's operations.
-  if (isParent && !isSchoolAdmin && !isPlatformAdmin && !crew) {
-    return <Navigate to="/parent" replace />;
+  // Keep non-school users out of the school-only Today screen.
+  if (session && location.pathname === "/app" && !isSchoolAdmin) {
+    const home = roleHome(session);
+    if (home !== "/app") {
+      return <Navigate to={home} replace />;
+    }
   }
 
   const items: NavItem[] = [
-    { to: "/app", label: "Today", icon: LayoutDashboard, end: true },
-    ...(crew ? [{ to: "/crew", label: "My trips", icon: Bus }] : []),
+    ...(isSchoolAdmin ? [{ to: "/app", label: "Today", icon: LayoutDashboard, end: true }] : []),
+    ...(crew && !isPlatformAdmin ? [{ to: "/crew", label: "My trips", icon: Bus }] : []),
     ...(isSchoolAdmin
       ? [
           { to: "/app/children", label: "Children & guardians", icon: Users },
@@ -73,13 +77,13 @@ export function AppShell() {
           <div className="flex items-center gap-2 px-2 py-1">
             <span className="font-display text-lg font-bold tracking-tight">Tafi</span>
             <span className="truncate text-xs text-muted-foreground">
-              {school?.organization_name ?? "school portal"}
+              {isPlatformAdmin ? "Tafi platform" : (school?.organization_name ?? "School portal")}
             </span>
           </div>
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>School</SidebarGroupLabel>
+            <SidebarGroupLabel>{isSchoolAdmin ? "School" : "Platform"}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarNav items={items} isActive={isActive} />
             </SidebarGroupContent>
@@ -105,7 +109,9 @@ export function AppShell() {
       <SidebarInset>
         <header className="flex h-14 items-center gap-3 border-b border-border px-3">
           <SidebarTrigger />
-          <span className="font-medium">{school?.organization_name ?? "Tafi"}</span>
+          <span className="font-medium">
+            {isPlatformAdmin ? "Tafi platform" : (school?.organization_name ?? "Tafi")}
+          </span>
         </header>
         <p
           role="status"

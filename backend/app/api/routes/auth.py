@@ -2,13 +2,14 @@
 
 from datetime import timedelta
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import CurrentUser, DbSession, memberships_for
 from app.core.clock import is_expired, utcnow
 from app.core.config import get_settings
+from app.core.rate_limit import enforce_auth_rate_limit
 from app.core.security import (
     create_session_token,
     generate_token,
@@ -34,6 +35,13 @@ from app.schemas.auth import (
 )
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
+
+
+def _rate_limit_identity(request: Request) -> str:
+    """Use the address set by our trusted web proxy, or the direct peer."""
+    return request.headers.get("X-Real-IP") or (
+        request.client.host if request.client else "unknown"
+    )
 
 
 def build_session(db: Session, user: User) -> SessionRead:
@@ -100,8 +108,11 @@ def build_reset_url(token: str) -> str:
 
 
 @router.post("/sign-in", response_model=SessionRead)
-def sign_in(payload: SignInRequest, response: Response, db: DbSession) -> SessionRead:
+def sign_in(
+    payload: SignInRequest, request: Request, response: Response, db: DbSession
+) -> SessionRead:
     """Start a session with an email and password."""
+    enforce_auth_rate_limit("sign-in", _rate_limit_identity(request))
     user = db.scalar(select(User).where(User.email == payload.email))
     if (
         user is None
@@ -114,8 +125,17 @@ def sign_in(payload: SignInRequest, response: Response, db: DbSession) -> Sessio
 
 
 @router.post("/signup", response_model=SessionRead, status_code=status.HTTP_201_CREATED)
-def signup(payload: SignupRequest, response: Response, db: DbSession) -> SessionRead:
+def signup(
+    payload: SignupRequest, request: Request, response: Response, db: DbSession
+) -> SessionRead:
     """Create a school and its first admin in one step (D-37)."""
+    if not get_settings().self_signup_enabled:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "Self-service school signup is not enabled in this environment.",
+        )
+    enforce_auth_rate_limit("signup", _rate_limit_identity(request))
+
     if db.scalar(select(User).where(User.email == payload.email)) is not None:
         raise HTTPException(
             status.HTTP_409_CONFLICT, "That email already has an account. Sign in instead."

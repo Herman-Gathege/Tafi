@@ -3,6 +3,7 @@
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from tests.helpers import (
     PASSWORD,
     make_invitation,
@@ -37,6 +38,31 @@ def test_sign_in_rejects_a_wrong_password(client: TestClient, db_session: Sessio
     make_user(db_session, "anne@example.com")
     assert sign_in(client, "anne@example.com", "not-the-password").status_code == 401
     assert client.get("/api/v1/auth/me").status_code == 401
+
+
+def test_sign_in_is_rate_limited_per_client_address(
+    client: TestClient, db_session: Session, monkeypatch
+) -> None:
+    make_user(db_session, "anne@example.com")
+    monkeypatch.setenv("AUTH_SIGN_IN_LIMIT", "2")
+    get_settings.cache_clear()
+    headers = {"X-Real-IP": "198.51.100.10"}
+
+    for _ in range(2):
+        response = client.post(
+            "/api/v1/auth/sign-in",
+            json={"email": "anne@example.com", "password": "wrong"},
+            headers=headers,
+        )
+        assert response.status_code == 401
+    limited = client.post(
+        "/api/v1/auth/sign-in",
+        json={"email": "anne@example.com", "password": PASSWORD},
+        headers=headers,
+    )
+
+    assert limited.status_code == 429
+    assert limited.headers["Retry-After"] == "60"
 
 
 def test_me_without_a_session_is_unauthorised(client: TestClient) -> None:
