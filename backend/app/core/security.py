@@ -4,6 +4,7 @@ import hashlib
 import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
+from threading import BoundedSemaphore
 
 import jwt
 from argon2 import PasswordHasher
@@ -12,17 +13,23 @@ from argon2.exceptions import Argon2Error
 from app.core.config import get_settings
 
 _hasher = PasswordHasher()
+# Argon2 deliberately uses about 64 MiB per verification. Keep concurrent password
+# work below the API container's memory limit; one CPU makes higher parallelism
+# slower without improving throughput.
+_password_work = BoundedSemaphore(2)
 
 
 def hash_password(password: str) -> str:
     """Hash a password with argon2."""
-    return _hasher.hash(password)
+    with _password_work:
+        return _hasher.hash(password)
 
 
 def verify_password(password_hash: str, password: str) -> bool:
     """Return True when the password matches the stored hash."""
     try:
-        return _hasher.verify(password_hash, password)
+        with _password_work:
+            return _hasher.verify(password_hash, password)
     except (Argon2Error, ValueError):
         return False
 
