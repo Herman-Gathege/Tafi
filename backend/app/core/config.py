@@ -33,9 +33,10 @@ class Settings(BaseSettings):
 
     # None follows APP_ENV: enabled locally, disabled everywhere else.
     allow_self_signup: bool | None = None
-    auth_sign_in_limit: int = Field(default=20, ge=1)
+    auth_sign_in_limit: int = Field(default=10, ge=1)
     auth_signup_limit: int = Field(default=5, ge=1)
-    auth_rate_window_seconds: int = Field(default=60, ge=1)
+    auth_sign_in_window_seconds: int = Field(default=300, ge=1)
+    auth_signup_window_seconds: int = Field(default=3600, ge=1)
 
     # Invitations and password resets.
     invite_ttl_days: int = 7

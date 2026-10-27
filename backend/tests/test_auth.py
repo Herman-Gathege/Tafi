@@ -1,6 +1,7 @@
 """Sign in, sign out, invitations and password resets."""
 
 from fastapi.testclient import TestClient
+from redis.exceptions import RedisError
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -62,7 +63,27 @@ def test_sign_in_is_rate_limited_per_client_address(
     )
 
     assert limited.status_code == 429
-    assert limited.headers["Retry-After"] == "60"
+    assert limited.headers["Retry-After"] == "300"
+
+
+def test_sign_in_fails_closed_when_redis_rate_limiting_is_unavailable(
+    client: TestClient, monkeypatch
+) -> None:
+    class BrokenRedis:
+        def eval(self, *args, **kwargs):
+            raise RedisError("unavailable")
+
+    monkeypatch.setenv("APP_ENV", "staging")
+    get_settings.cache_clear()
+    monkeypatch.setattr("app.core.rate_limit.get_redis", lambda: BrokenRedis())
+
+    response = client.post(
+        "/api/v1/auth/sign-in",
+        json={"email": "anne@example.com", "password": "wrong"},
+    )
+
+    assert response.status_code == 503
+    assert "temporarily unavailable" in response.json()["detail"]
 
 
 def test_me_without_a_session_is_unauthorised(client: TestClient) -> None:

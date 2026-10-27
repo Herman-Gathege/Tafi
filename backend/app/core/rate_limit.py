@@ -58,10 +58,12 @@ def _redis_allows(key: str, limit: int, window_seconds: int) -> bool:
 def enforce_auth_rate_limit(scope: str, identity: str) -> None:
     """Reject a caller who exceeds the configured authentication rate."""
     settings = get_settings()
-    limit = (
-        settings.auth_signup_limit if scope == "signup" else settings.auth_sign_in_limit
-    )
-    window = settings.auth_rate_window_seconds
+    if scope == "signup":
+        limit = settings.auth_signup_limit
+        window = settings.auth_signup_window_seconds
+    else:
+        limit = settings.auth_sign_in_limit
+        window = settings.auth_sign_in_window_seconds
     digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()
     key = f"tafi:rate:{scope}:{digest}"
 
@@ -71,13 +73,14 @@ def enforce_auth_rate_limit(scope: str, identity: str) -> None:
         try:
             allowed = _redis_allows(key, limit, window)
         except (RedisError, OSError):
-            # Keep authentication available if Redis is temporarily unavailable;
-            # the fallback is deliberately local to this process.
-            allowed = _memory_allows(key, limit, window)
+            raise HTTPException(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                "Authentication protection is temporarily unavailable. Try again shortly.",
+            ) from None
 
     if not allowed:
         raise HTTPException(
             status.HTTP_429_TOO_MANY_REQUESTS,
-            "Too many attempts. Try again in a minute.",
+            "Too many attempts. Try again later.",
             headers={"Retry-After": str(window)},
         )
