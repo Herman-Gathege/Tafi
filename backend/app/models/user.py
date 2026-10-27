@@ -27,14 +27,16 @@ if TYPE_CHECKING:
 class MembershipRole(enum.StrEnum):
     """What someone may do inside one organization.
 
-    Stored as plain text (VARCHAR 32), so adding a role needs no migration. Parents sign in
-    with a one-time WhatsApp code in Sprint 5 (D-20), not through a membership role.
+    Stored as plain text (VARCHAR 32), so adding a role needs no migration.
     """
 
     SCHOOL_ADMIN = "school_admin"
     DRIVER = "driver"
     # D-21: optional second crew member; marks children on and off the bus.
     CONDUCTOR = "conductor"
+    # Temporary password login for the parent dashboard (D-37). The one-time WhatsApp-code
+    # flow remains the planned production sign-in for parents (D-20).
+    PARENT = "parent"
 
 
 CREW_ROLES = frozenset({MembershipRole.DRIVER, MembershipRole.CONDUCTOR})

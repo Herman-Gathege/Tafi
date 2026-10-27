@@ -12,6 +12,7 @@ from app.core.config import get_settings
 from app.core.security import decode_session_token
 from app.db.base import Base
 from app.db.session import get_db
+from app.models.guardian import Guardian
 from app.models.organization import OrganizationType
 from app.models.user import CREW_ROLES, Membership, MembershipRole, User
 
@@ -115,6 +116,24 @@ def require_crew(membership: CurrentMembership) -> Membership:
 
 
 Crew = Annotated[Membership, Depends(require_crew)]
+
+
+def require_parent(membership: CurrentMembership, db: DbSession) -> Guardian:
+    """A guardian with a login, resolved to the guardian record (D-37)."""
+    if membership.role != MembershipRole.PARENT:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Parents only")
+    guardian = db.scalar(
+        select(Guardian).where(
+            Guardian.user_id == membership.user_id,
+            Guardian.organization_id == membership.organization_id,
+        )
+    )
+    if guardian is None:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "No guardian record for this account")
+    return guardian
+
+
+ParentGuardian = Annotated[Guardian, Depends(require_parent)]
 
 
 def get_owned_or_404[ModelT: Base](

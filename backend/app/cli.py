@@ -41,6 +41,7 @@ DEMO_ACCOUNTS = [
     ("demo.admin@tafi.test", "Demo School Admin", "school admin"),
     ("demo.driver@tafi.test", "Demo Driver", "driver"),
     ("demo.conductor@tafi.test", "Demo Conductor", "conductor"),
+    ("demo.parent@tafi.test", "Demo Parent", "parent"),
 ]
 
 
@@ -51,7 +52,7 @@ class NotLocalError(RuntimeError):
 def create_platform_admin(email: str, password: str, name: str | None = None) -> str:
     """Create the first Tafi account, or promote an existing one.
 
-    There is no self-signup: someone has to be able to make the first account.
+    Self-signup is available for schools (D-37); this remains the platform-admin path.
     """
     address = normalise_email(email)
     with SessionLocal() as db:
@@ -132,13 +133,15 @@ def seed_demo() -> list[str]:
         admin = _demo_user(db, "demo.admin@tafi.test", "Demo School Admin")
         driver = _demo_user(db, "demo.driver@tafi.test", "Demo Driver")
         conductor = _demo_user(db, "demo.conductor@tafi.test", "Demo Conductor")
+        parent = _demo_user(db, "demo.parent@tafi.test", "Demo Parent")
 
         _demo_membership(db, admin, org, MembershipRole.SCHOOL_ADMIN)
         driver_membership = _demo_membership(db, driver, org, MembershipRole.DRIVER)
         conductor_membership = _demo_membership(db, conductor, org, MembershipRole.CONDUCTOR)
+        _demo_membership(db, parent, org, MembershipRole.PARENT)
 
-        # A guardian record with consent, so the children have someone to notify. Parents
-        # sign in with a WhatsApp code in Sprint 5 (D-20); there is no parent login here.
+        # The parent login is for dashboard testing until Sprint 5 replaces it with a
+        # one-time WhatsApp code (D-20, D-37).
         guardian = db.scalar(
             select(Guardian).where(
                 Guardian.organization_id == org.id, Guardian.whatsapp_number == "+254700000001"
@@ -149,10 +152,16 @@ def seed_demo() -> list[str]:
                 organization_id=org.id,
                 full_name="Demo Parent",
                 whatsapp_number="+254700000001",
+                email="demo.parent@tafi.test",
                 status=GuardianStatus.CONFIRMED,
+                user_id=parent.id,
             )
             db.add(guardian)
             db.flush()
+        else:
+            guardian.email = "demo.parent@tafi.test"
+            guardian.status = GuardianStatus.CONFIRMED
+            guardian.user_id = parent.id
         record_consent(db, guardian, method=ConsentMethod.SCHOOL_RECORDED)
 
         route = db.scalar(select(Route).where(Route.organization_id == org.id, Route.code == "R1"))

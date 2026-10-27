@@ -29,7 +29,9 @@ export function SignInPage() {
               ? "/app"
               : roles.includes("driver") || roles.includes("conductor")
                 ? "/crew"
-                : "/app";
+                : roles.includes("parent")
+                  ? "/parent"
+                  : "/app";
           navigate(from ?? home, { replace: true });
         },
       },
@@ -41,7 +43,9 @@ export function SignInPage() {
       <Card>
         <CardHeader>
           <CardTitle>Sign in</CardTitle>
-          <CardDescription>School staff, crew and Tafi staff use the same door.</CardDescription>
+          <CardDescription>
+            School staff, crew, parents and Tafi staff use the same door.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="flex flex-col gap-4">
@@ -80,6 +84,12 @@ export function SignInPage() {
             <Link to="/forgot-password" className="text-sm text-muted-foreground underline">
               Forgot your password?
             </Link>
+            <p className="text-sm text-muted-foreground">
+              New to Tafi?{" "}
+              <Link to="/signup" className="underline">
+                Create your school's account
+              </Link>
+            </p>
           </form>
         </CardContent>
       </Card>

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Bus, Inbox, LayoutDashboard, LogOut, Route as RouteIcon, Shield, Users } from "lucide-react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import {
   Sidebar,
@@ -17,6 +17,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { listStopChangeRequests } from "@/lib/api";
 import { schoolKeys } from "@/lib/school-queries";
@@ -34,7 +35,7 @@ export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const signOut = useSignOut();
-  const { user, school, isPlatformAdmin, crew } = useSession();
+  const { user, school, isPlatformAdmin, crew, isParent } = useSession();
   const isSchoolAdmin = school?.role === "school_admin";
 
   const pendingRequests = useQuery({
@@ -43,6 +44,11 @@ export function AppShell() {
     enabled: isSchoolAdmin,
   });
   const pendingCount = pendingRequests.data?.length ?? 0;
+
+  // A parent's home is their family, not the school's operations.
+  if (isParent && !isSchoolAdmin && !isPlatformAdmin && !crew) {
+    return <Navigate to="/parent" replace />;
+  }
 
   const items: NavItem[] = [
     { to: "/app", label: "Today", icon: LayoutDashboard, end: true },
@@ -75,19 +81,7 @@ export function AppShell() {
           <SidebarGroup>
             <SidebarGroupLabel>School</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
-                {items.map((item) => (
-                  <SidebarMenuItem key={item.to}>
-                    <SidebarMenuButton asChild isActive={isActive(item)}>
-                      <NavLink to={item.to} end={item.end}>
-                        <item.icon />
-                        <span>{item.label}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                    {item.count ? <SidebarMenuBadge>{item.count}</SidebarMenuBadge> : null}
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
+              <SidebarNav items={items} isActive={isActive} />
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
@@ -124,5 +118,39 @@ export function AppShell() {
         </main>
       </SidebarInset>
     </SidebarProvider>
+  );
+}
+
+function SidebarNav({
+  items,
+  isActive,
+}: {
+  items: NavItem[];
+  isActive: (item: NavItem) => boolean;
+}) {
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  return (
+    <SidebarMenu>
+      {items.map((item) => (
+        <SidebarMenuItem key={item.to}>
+          <SidebarMenuButton asChild isActive={isActive(item)}>
+            <NavLink
+              to={item.to}
+              end={item.end}
+              onClick={() => {
+                if (isMobile) {
+                  setOpenMobile(false);
+                }
+              }}
+            >
+              <item.icon />
+              <span>{item.label}</span>
+            </NavLink>
+          </SidebarMenuButton>
+          {item.count ? <SidebarMenuBadge>{item.count}</SidebarMenuBadge> : null}
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
   );
 }
